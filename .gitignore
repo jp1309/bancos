@@ -64,7 +64,6 @@ chromedriver*
 
 # Streamlit
 .streamlit/secrets.toml
-.streamlit/config.toml
 
 # Jupyter Notebook
 .ipynb_checkpoints
