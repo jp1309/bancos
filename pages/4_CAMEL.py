@@ -492,7 +492,9 @@ def main():
         with col1:
             # Selector de categoria
             categorias = list(INDICADORES_PRINCIPALES.keys())
-            categoria_sel = st.selectbox("Categoria", categorias)
+            # Preseleccionar "A - Morosidad por Cartera"
+            default_cat_idx = categorias.index('A - Morosidad por Cartera') if 'A - Morosidad por Cartera' in categorias else 0
+            categoria_sel = st.selectbox("Categoria", categorias, index=default_cat_idx)
 
             # Selector de indicador
             indicadores_cat = INDICADORES_PRINCIPALES[categoria_sel]
@@ -515,7 +517,10 @@ def main():
 
         with col1:
             # Selector de categoria
-            categoria_evol = st.selectbox("Categoria", list(INDICADORES_PRINCIPALES.keys()), key='cat_evol')
+            categorias_evol = list(INDICADORES_PRINCIPALES.keys())
+            # Preseleccionar "A - Morosidad por Cartera"
+            default_cat_evol_idx = categorias_evol.index('A - Morosidad por Cartera') if 'A - Morosidad por Cartera' in categorias_evol else 0
+            categoria_evol = st.selectbox("Categoria", categorias_evol, index=default_cat_evol_idx, key='cat_evol')
 
             # Selector de indicador
             indicadores_evol = INDICADORES_PRINCIPALES[categoria_evol]
@@ -562,7 +567,10 @@ def main():
 
         with col1:
             # Selector de categoria
-            categoria_heat = st.selectbox("Categoria", list(INDICADORES_PRINCIPALES.keys()), key='cat_heat')
+            categorias_heat = list(INDICADORES_PRINCIPALES.keys())
+            # Preseleccionar "A - Morosidad por Cartera"
+            default_cat_heat_idx = categorias_heat.index('A - Morosidad por Cartera') if 'A - Morosidad por Cartera' in categorias_heat else 0
+            categoria_heat = st.selectbox("Categoria", categorias_heat, index=default_cat_heat_idx, key='cat_heat')
 
             # Selector de indicador
             indicadores_heat = INDICADORES_PRINCIPALES[categoria_heat]
