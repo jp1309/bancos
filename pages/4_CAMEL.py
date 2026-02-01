@@ -410,12 +410,27 @@ def crear_heatmap_indicador(df: pd.DataFrame, codigo: str, nombre_indicador: str
     colorscale = ESCALAS_COLORES_HEATMAP.get(codigo, 'RdYlGn')
     rango = RANGOS_HEATMAP.get(codigo, None)
 
-    # Determinar zmid (punto medio de la escala)
+    # Determinar zmid (punto crítico de la escala)
     zmid = None
     if rango:
         if codigo in ['ROA', 'ROE']:
-            # Para ROA y ROE, centrar en 0
+            # Para ROA y ROE, punto crítico en 0%
             zmid = 0
+        elif codigo == 'SOL':
+            # Para Solvencia, punto crítico en 9%
+            zmid = 9
+        elif codigo.startswith('COB_'):
+            # Para Cobertura, punto crítico en 100%
+            zmid = 100
+        elif codigo == 'GO_MNF':
+            # Para Gastos Op/MNF, punto crítico en 100%
+            zmid = 100
+        elif codigo == 'AP_PC':
+            # Para Act. Prod/Pas. Costo, punto crítico en 100%
+            zmid = 100
+        elif codigo == 'LIQ':
+            # Para Liquidez, punto crítico en 15%
+            zmid = 15
         else:
             # Para otros, usar punto medio del rango
             zmid = (rango[0] + rango[1]) / 2
