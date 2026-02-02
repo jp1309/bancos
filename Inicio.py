@@ -408,7 +408,7 @@ def main():
         st.page_link("pages/2_Balance_General.py", label="⚖️ Balance General", use_container_width=True)
 
     with col_c:
-        st.page_link("pages/3_Perdidas_Ganancias.py", label="💰 Pérdidas y Ganancias", use_container_width=True)
+        st.page_link("pages/3_Pérdidas_y_Ganancias.py", label="💰 Pérdidas y Ganancias", use_container_width=True)
 
     with col_d:
         st.page_link("pages/4_CAMEL.py", label="🎯 Indicadores CAMEL", use_container_width=True)
