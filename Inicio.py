@@ -3,8 +3,8 @@
 """
 Sistema de Inteligencia Financiera - Banca Ecuatoriana
 
-Dashboard interactivo para analisis del sistema bancario ecuatoriano
-con datos historicos desde 2003.
+Dashboard interactivo para análisis del sistema bancario ecuatoriano
+con datos históricos desde 2003.
 
 Ejecutar con: streamlit run Inicio.py
 """
@@ -27,7 +27,7 @@ st.set_page_config(
     menu_items={
         'About': """
         ## Sistema de Inteligencia Financiera
-        Plataforma de analisis del sistema bancario ecuatoriano.
+        Plataforma de análisis del sistema bancario ecuatoriano.
 
         **Fuente de datos:** Superintendencia de Bancos del Ecuador
         **Periodo:** 2003 - 2025 (23 años de historia)
@@ -186,13 +186,13 @@ def render_header():
     st.markdown("""
         <div class="main-header">
             <h1>📊 Sistema de Inteligencia Financiera</h1>
-            <p>Analisis Avanzado de la Banca Ecuatoriana | 23 años de datos historicos (2003-2025)</p>
+            <p>Análisis Avanzado de la Banca Ecuatoriana | 23 años de datos históricos (2003-2025)</p>
         </div>
     """, unsafe_allow_html=True)
 
 
 def obtener_metadata():
-    """Obtiene informacion sobre la actualizacion de datos."""
+    """Obtiene información sobre la actualización de datos."""
     metadata_path = Path('master_data/metadata.json')
     if metadata_path.exists():
         with open(metadata_path, 'r', encoding='utf-8') as f:
@@ -203,7 +203,7 @@ def obtener_metadata():
 def main():
     render_header()
 
-    # Informacion de actualizacion
+    # Información de actualización
     metadata = obtener_metadata()
 
     # KPIs principales en la parte superior
@@ -387,7 +387,7 @@ def main():
             </div>
             <div>
                 <p style="margin: 0; font-weight: 600; color: #1a365d; font-size: 0.9rem;">✓ Visualizaciones</p>
-                <p style="margin: 0.25rem 0 0 0; color: #718096; font-size: 0.85rem;">Rankings, evolución temporal y heatmaps mensuales con escalas de color</p>
+                <p style="margin: 0.25rem 0 0 0; color: #718096; font-size: 0.85rem;">Rankings, evolución temporal y heatmaps mensuales con escalas de colores</p>
             </div>
         </div>
     </div>

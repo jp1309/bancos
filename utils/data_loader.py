@@ -182,7 +182,7 @@ def cargar_camel() -> Tuple[pd.DataFrame, Dict[str, Any]]:
 @st.cache_data(ttl=3600)
 def cargar_metadata() -> Dict[str, Any]:
     """
-    Carga metadata.json con informacion de la ultima actualizacion.
+    Carga metadata.json con información de la última actualización.
     """
     filepath = MASTER_DATA_DIR / "metadata.json"
 

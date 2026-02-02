@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Modulo 2: Balance General
-Analisis temporal de las cuentas de balance del sistema bancario.
+Módulo 2: Balance General
+Análisis temporal de las cuentas de balance del sistema bancario.
 """
 
 import streamlit as st
@@ -132,7 +132,7 @@ def obtener_datos_heatmap_mensual(df_completo: pd.DataFrame, codigo: str, bancos
     if df_filtrado.empty:
         return pd.DataFrame()
 
-    df_filtrado['ano'] = df_filtrado['fecha'].dt.year
+    df_filtrado['año'] = df_filtrado['fecha'].dt.year
     df_filtrado['mes'] = df_filtrado['fecha'].dt.month
     df_filtrado['valor_millones'] = df_filtrado['valor'] / 1000
 
@@ -140,7 +140,7 @@ def obtener_datos_heatmap_mensual(df_completo: pd.DataFrame, codigo: str, bancos
     df_filtrado['fecha_str'] = df_filtrado['fecha'].dt.strftime('%Y-%m')
 
     # Calcular crecimiento YoY: cada mes vs mismo mes año anterior
-    df_filtrado = df_filtrado.sort_values(['banco', 'ano', 'mes'])
+    df_filtrado = df_filtrado.sort_values(['banco', 'año', 'mes'])
 
     # Para cada banco y mes, calcular variación vs año anterior
     df_filtrado['valor_ano_anterior'] = df_filtrado.groupby(['banco', 'mes'])['valor_millones'].shift(1)
@@ -223,7 +223,7 @@ def obtener_valores_bancos_mes(df: pd.DataFrame, codigo: str, fecha: pd.Timestam
 
 def main():
     st.title("📊 Balance General")
-    st.markdown("Analisis temporal avanzado del sistema bancario ecuatoriano.")
+    st.markdown("Análisis temporal avanzado del sistema bancario ecuatoriano.")
 
     # CSS para ampliar el ancho de los selectbox
     st.markdown("""
@@ -258,7 +258,7 @@ def main():
     fecha_min = df_balance['fecha'].min()
     fecha_max = df_balance['fecha'].max()
 
-    st.sidebar.markdown("### Informacion del Modulo")
+    st.sidebar.markdown("### Información del Módulo")
     st.sidebar.markdown(f"**Datos disponibles:** {fecha_min.strftime('%b %Y')} - {fecha_max.strftime('%b %Y')}")
     st.sidebar.markdown(f"**Bancos:** {len(bancos)}")
     st.sidebar.markdown("---")
@@ -269,8 +269,8 @@ def main():
     # ==========================================================================
 
     st.markdown("---")
-    st.markdown("### 1. Evolucion Comparativa")
-    st.caption("Compara la evolucion temporal de multiples bancos")
+    st.markdown("### 1. Evolución Comparativa")
+    st.caption("Compara la evolución temporal de múltiples bancos")
 
     # Obtener jerarquia de cuentas
     jerarquia = obtener_jerarquia_cuentas(df_balance)
@@ -501,7 +501,7 @@ def main():
             titulo_cuenta = cuenta_info if len(str(cuenta_info)) < 50 else str(cuenta_info)[:47] + "..."
 
             fig_evol.update_layout(
-                title=f"Evolucion: {titulo_cuenta}",
+                title=f"Evolución: {titulo_cuenta}",
                 height=450,
                 xaxis_title="Fecha",
                 yaxis_title=y_title,
@@ -718,7 +718,7 @@ def main():
 
     st.markdown("---")
     st.markdown("### 3. Ranking de Bancos por Cuenta")
-    st.caption("Comparacion de valores de todos los bancos para una cuenta y mes especificos")
+    st.caption("Comparación de valores de todos los bancos para una cuenta y mes específicos")
 
     # Filtros de cuenta (usando la misma jerarquia que secciones anteriores)
     col_f1, col_f2, col_f3, col_f4 = st.columns([2, 2, 2, 2])

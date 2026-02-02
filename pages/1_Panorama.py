@@ -247,11 +247,11 @@ def main():
         return
 
     # Sidebar - Filtros
-    st.sidebar.markdown("### Configuracion")
+    st.sidebar.markdown("### Configuración")
 
     fechas = obtener_fechas_disponibles(df_balance)
     fecha_seleccionada = st.sidebar.selectbox(
-        "Fecha de analisis",
+        "Fecha de análisis",
         options=fechas,
         format_func=lambda x: x.strftime('%B %Y').title(),
         index=0
@@ -290,7 +290,7 @@ def main():
             f"${metricas['total_activos']:,.0f}M",
             "Total Activos",
             delta=delta,
-            delta_label="vs ano ant."
+            delta_label="vs año ant."
         )
 
     with col2:
@@ -299,7 +299,7 @@ def main():
             f"${metricas['total_cartera']:,.0f}M",
             "Cartera Creditos",
             delta=delta,
-            delta_label="vs ano ant."
+            delta_label="vs año ant."
         )
 
     with col3:
@@ -308,7 +308,7 @@ def main():
             f"${metricas['total_depositos']:,.0f}M",
             "Depositos Publico",
             delta=delta,
-            delta_label="vs ano ant."
+            delta_label="vs año ant."
         )
 
     with col4:
@@ -317,7 +317,7 @@ def main():
             f"${metricas['total_patrimonio']:,.0f}M",
             "Patrimonio",
             delta=delta,
-            delta_label="vs ano ant."
+            delta_label="vs año ant."
         )
 
     with col5:

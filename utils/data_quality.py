@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Funciones de validacion y analisis de calidad de datos.
+Funciones de validación y análisis de calidad de datos.
 """
 
 import pandas as pd
@@ -52,19 +52,19 @@ def calcular_completitud_general(calidad_dict: Dict[str, Dict]) -> Dict[str, Any
 
 def validar_cobertura_bancos(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Genera matriz de cobertura bancos x anos.
+    Genera matriz de cobertura bancos x años.
 
     Args:
         df: DataFrame con columnas 'banco' y 'fecha'
 
     Returns:
-        DataFrame pivotado con bancos en filas y anos en columnas
+        DataFrame pivotado con bancos en filas y años en columnas
     """
     df_temp = df.copy()
-    df_temp['ano'] = df_temp['fecha'].dt.year
+    df_temp['año'] = df_temp['fecha'].dt.year
 
-    # Contar registros por banco y ano
-    cobertura = df_temp.groupby(['banco', 'ano']).size().unstack(fill_value=0)
+    # Contar registros por banco y año
+    cobertura = df_temp.groupby(['banco', 'año']).size().unstack(fill_value=0)
 
     # Convertir a binario (tiene datos o no)
     cobertura_binaria = (cobertura > 0).astype(int)
@@ -83,8 +83,8 @@ def calcular_cobertura_por_fecha(df: pd.DataFrame) -> pd.DataFrame:
     cobertura.columns = ['fecha', 'bancos_con_datos']
     cobertura = cobertura.sort_values('fecha')
 
-    # Agregar columna de ano para facilitar visualizacion
-    cobertura['ano'] = cobertura['fecha'].dt.year
+    # Agregar columna de año para facilitar visualización
+    cobertura['año'] = cobertura['fecha'].dt.year
     cobertura['mes'] = cobertura['fecha'].dt.month
 
     return cobertura

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Modulo 4: Indicadores CAMEL
-Analisis de indicadores financieros del sistema bancario ecuatoriano.
+Módulo 4: Indicadores CAMEL
+Análisis de indicadores financieros del sistema bancario ecuatoriano.
 """
 
 import streamlit as st
@@ -260,7 +260,7 @@ def obtener_ranking_indicador(df: pd.DataFrame, codigo: str, fecha, excluir_banc
 
 @st.cache_data
 def obtener_evolucion_indicador(df: pd.DataFrame, codigo: str, bancos: list) -> pd.DataFrame:
-    """Obtiene evolucion temporal de un indicador para varios bancos."""
+    """Obtiene evolución temporal de un indicador para varios bancos."""
     df_filtrado = df[(df['codigo'] == codigo) & (df['banco'].isin(bancos))].copy()
     df_filtrado = df_filtrado.sort_values(['banco', 'fecha'])
     df_filtrado['valor_pct'] = df_filtrado['valor'] * 100
@@ -321,7 +321,7 @@ def obtener_heatmap_indicador(df: pd.DataFrame, codigo: str, fecha_inicio=None, 
 # =============================================================================
 
 def crear_grafico_evolucion(df: pd.DataFrame, codigo: str, bancos: list, nombre_indicador: str, fecha_inicio=None):
-    """Crea grafico de evolucion temporal de un indicador."""
+    """Crea gráfico de evolución temporal de un indicador."""
     df_evol = obtener_evolucion_indicador(df, codigo, bancos)
 
     if df_evol.empty:
@@ -340,7 +340,7 @@ def crear_grafico_evolucion(df: pd.DataFrame, codigo: str, bancos: list, nombre_
         x='fecha',
         y='valor_pct',
         color='banco',
-        title=f"Evolucion: {nombre_indicador}",
+        title=f"Evolución: {nombre_indicador}",
         labels={'fecha': 'Fecha', 'valor_pct': 'Valor (%)', 'banco': 'Banco'},
         color_discrete_map=color_map,
     )
@@ -399,7 +399,7 @@ def crear_ranking_barras(df: pd.DataFrame, codigo: str, fecha, nombre_indicador:
 
 
 def crear_heatmap_indicador(df: pd.DataFrame, codigo: str, nombre_indicador: str, fecha_inicio=None, fecha_fin=None):
-    """Crea heatmap de evolucion mensual de un indicador."""
+    """Crea heatmap de evolución mensual de un indicador."""
     heatmap_data = obtener_heatmap_indicador(df, codigo, fecha_inicio, fecha_fin)
 
     if heatmap_data.empty:
@@ -448,7 +448,7 @@ def crear_heatmap_indicador(df: pd.DataFrame, codigo: str, nombre_indicador: str
     ))
 
     fig.update_layout(
-        title=f"Evolucion Mensual: {nombre_indicador} (%)",
+        title=f"Evolución Mensual: {nombre_indicador} (%)",
         height=max(400, len(heatmap_data) * 22),
         xaxis_title='Periodo (Año-Mes)',
         yaxis_title='Banco',
@@ -480,7 +480,7 @@ def main():
     fechas = obtener_fechas_disponibles(df_camel)
     fecha_default = fechas[0] if fechas else None
     fecha_seleccionada = st.sidebar.selectbox(
-        "Fecha de analisis",
+        "Fecha de análisis",
         options=fechas,
         index=0 if fechas else None,
         format_func=lambda x: x.strftime('%B %Y') if pd.notna(x) else str(x)
@@ -495,12 +495,12 @@ def main():
 
     # Tabs principales
     tab1, tab3, tab4 = st.tabs([
-        "📊 Analisis por Indicador",
-        "📈 Evolucion Temporal",
+        "📊 Análisis por Indicador",
+        "📈 Evolución Temporal",
         "🗺️ Heatmap Mensual"
     ])
 
-    # Tab 1: Analisis por Indicador
+    # Tab 1: Análisis por Indicador
     with tab1:
         col1, col2 = st.columns([1, 2])
 
@@ -526,7 +526,7 @@ def main():
             crear_ranking_barras(df_camel, indicador_codigo, fecha_seleccionada,
                                 indicador_nombre, excluir_bancos)
 
-    # Tab 3: Evolucion Temporal
+    # Tab 3: Evolución Temporal
     with tab3:
         col1, col2 = st.columns([1, 3])
 
@@ -574,7 +574,7 @@ def main():
             if bancos_evol:
                 crear_grafico_evolucion(df_camel, indicador_codigo_evol, bancos_evol, indicador_nombre_evol, fecha_inicio_evol)
             else:
-                st.info("Selecciona al menos un banco para ver la evolucion")
+                st.info("Selecciona al menos un banco para ver la evolución")
 
     # Tab 4: Heatmap Mensual
     with tab4:

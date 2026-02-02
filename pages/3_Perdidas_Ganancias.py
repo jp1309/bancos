@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Modulo 3: Perdidas y Ganancias
-Analisis de resultados y rentabilidad del sistema bancario.
+Módulo 3: Pérdidas y Ganancias
+Análisis de resultados y rentabilidad del sistema bancario.
 """
 
 import streamlit as st
@@ -24,7 +24,7 @@ from config.indicator_mapping import obtener_color_banco
 # =============================================================================
 
 st.set_page_config(
-    page_title="Perdidas y Ganancias | Radar Bancario",
+    page_title="Pérdidas y Ganancias | Radar Bancario",
     page_icon="💰",
     layout="wide",
 )
@@ -66,8 +66,8 @@ def obtener_orden_bancos_por_activos() -> list:
 # =============================================================================
 
 def main():
-    st.title("💰 Perdidas y Ganancias")
-    st.markdown("Analisis de perdidas y ganancias del sistema bancario ecuatoriano.")
+    st.title("💰 Pérdidas y Ganancias")
+    st.markdown("Análisis de pérdidas y ganancias del sistema bancario ecuatoriano.")
 
     # Cargar datos
     try:
@@ -108,8 +108,8 @@ def main():
     # ==========================================================================
 
     st.markdown("---")
-    st.markdown("### 1. Evolucion Comparativa")
-    st.caption("Compara la evolucion temporal de multiples bancos para un indicador de P&G")
+    st.markdown("### 1. Evolución Comparativa")
+    st.caption("Compara la evolución temporal de múltiples bancos para un indicador de P&G")
 
     # -------------------------------------------------------------------------
     # FILA 1: Selector de Indicador
@@ -254,7 +254,7 @@ def main():
                 ))
 
             fig_evol.update_layout(
-                title=f"Evolucion: {CUENTAS_PYG[codigo_cuenta]}",
+                title=f"Evolución: {CUENTAS_PYG[codigo_cuenta]}",
                 height=450,
                 xaxis_title="Fecha",
                 yaxis_title=y_label,
@@ -274,7 +274,7 @@ def main():
     # ==========================================================================
 
     st.markdown("### 2. Ranking de Bancos por Indicador")
-    st.caption("Comparacion de valores de todos los bancos para un indicador y mes especificos")
+    st.caption("Comparación de valores de todos los bancos para un indicador y mes específicos")
 
     # Filtros
     col_f1, col_f2, col_f3 = st.columns(3)
