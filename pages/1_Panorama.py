@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Modulo 1: Panorama del Sistema
-Vision general del sistema bancario ecuatoriano.
+Módulo 1: Panorama del Sistema
+Visión general del sistema bancario ecuatoriano.
 """
 
 import streamlit as st
@@ -237,7 +237,7 @@ def obtener_datos_treemap_jerarquico(df: pd.DataFrame, fecha, tipo='activos') ->
 
 def main():
     st.title("📊 Panorama del Sistema Bancario")
-    st.markdown("Vision general del sistema financiero ecuatoriano.")
+    st.markdown("Visión general del sistema financiero ecuatoriano.")
 
     # Cargar datos
     try:
