@@ -41,18 +41,30 @@ bancos/
 ├── pages/                         # Módulos de análisis
 │   ├── 1_Panorama.py             # Vista general del sistema
 │   ├── 2_Balance_General.py      # Análisis temporal de balance
-│   ├── 3_Perdidas_Ganancias.py   # Estado de resultados
+│   ├── 3_Pérdidas_y_Ganancias.py # Estado de resultados
 │   └── 4_CAMEL.py                # Indicadores CAMEL
 ├── utils/                         # Utilidades compartidas
 │   ├── data_loader.py            # Carga y validación de datos
 │   └── charts.py                 # Componentes de visualización
 ├── config/
 │   └── indicator_mapping.py      # Mapeo de códigos contables
-└── master_data/                   # Datos en formato Parquet
-    ├── balance.parquet
-    ├── pyg.parquet
-    ├── indicadores.parquet
-    └── camel.parquet
+├── scripts/                       # Scripts de automatización
+│   ├── config.py                 # Configuración de descarga
+│   ├── actualizar_datos.py       # Script maestro
+│   ├── descargar.py              # Scraping de datos
+│   ├── procesar_balance.py       # Procesamiento de balance
+│   ├── procesar_pyg.py           # Procesamiento de PyG
+│   └── procesar_camel.py         # Cálculo de indicadores
+├── .github/workflows/             # GitHub Actions
+│   └── actualizar-datos.yml      # Workflow de actualización
+├── master_data/                   # Datos en formato Parquet
+│   ├── balance.parquet           # Balance General (~18 MB)
+│   ├── pyg.parquet               # Pérdidas y Ganancias (~10 MB)
+│   ├── camel.parquet             # Indicadores CAMEL (~1.6 MB)
+│   ├── metadata.json             # Info de última actualización
+│   └── update_status.json        # Estado del proceso
+├── requirements.txt               # Dependencias de Streamlit
+└── requirements-scraping.txt      # Dependencias de scraping
 ```
 
 ## Módulos Implementados
@@ -283,6 +295,53 @@ streamlit run Inicio.py --server.port 8502
 ```
 
 Acceder en: http://localhost:8502
+
+## Actualización Automática de Datos
+
+El sistema incluye un proceso automatizado que actualiza los datos mensualmente usando GitHub Actions.
+
+### Funcionamiento
+
+- **Cuándo:** Del día 10 al 15 de cada mes a las 8:00 AM (hora Ecuador)
+- **Qué hace:** Descarga los datos del mes anterior desde la Superintendencia de Bancos
+- **Proceso:**
+  1. Descarga archivos ZIP de cada banco
+  2. Extrae y procesa hojas Excel (Balance, PyG)
+  3. Calcula indicadores CAMEL
+  4. Genera archivos `.parquet` optimizados
+  5. Hace commit automático a GitHub
+  6. Streamlit Cloud se actualiza automáticamente
+
+### Archivos del Sistema de Automatización
+
+```
+.github/workflows/
+└── actualizar-datos.yml    # Workflow de GitHub Actions
+
+scripts/
+├── config.py               # Configuración del periodo a descargar
+├── actualizar_datos.py     # Script maestro de orquestación
+├── descargar.py            # Scraping de la Superintendencia
+├── procesar_balance.py     # Procesa Balance General
+├── procesar_pyg.py         # Procesa Pérdidas y Ganancias
+└── procesar_camel.py       # Calcula indicadores CAMEL
+```
+
+### Ejecución Manual
+
+Desde GitHub Actions:
+1. Ir a https://github.com/jp1309/bancos/actions
+2. Seleccionar "Actualizar Datos Bancarios"
+3. Clic en "Run workflow"
+
+Desde línea de comandos:
+```bash
+python scripts/actualizar_datos.py
+```
+
+### Documentación Detallada
+
+Ver [docs/AUTOMATIZACION.md](docs/AUTOMATIZACION.md) para información completa sobre el sistema de actualización.
 
 ## Calidad de Datos
 
