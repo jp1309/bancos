@@ -1,7 +1,12 @@
-# Archivos descargados
+# Archivos descargados (temporales)
 descargas/
 datos_bancos*/
 *.zip
+
+# Datos master (estos SÍ se incluyen en el repo)
+!master_data/
+!master_data/*.parquet
+!master_data/*.json
 
 # Screenshots y debug
 screenshots_debug/
@@ -13,10 +18,14 @@ step*.png
 screenshot*.png
 
 # Archivos temporales
-*.json
-*.txt
 enlaces_*.txt
 archivos_info.json
+check_result.txt
+
+# JSON temporales (excepto master_data/)
+/*.json
+/scripts/*.json
+!/master_data/*.json
 
 # Python
 __pycache__/

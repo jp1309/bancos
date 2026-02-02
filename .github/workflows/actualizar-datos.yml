@@ -1,0 +1,151 @@
+name: Actualizar Datos Bancarios
+
+# Ejecutar el día 10 de cada mes a las 8:00 AM (hora Ecuador, UTC-5)
+# También permite ejecución manual
+on:
+  schedule:
+    # Cron: minuto hora día-del-mes mes día-de-semana
+    # 13:00 UTC = 08:00 Ecuador (UTC-5)
+    - cron: '0 13 10-15 * *'  # Del 10 al 15 de cada mes a las 08:00 Ecuador
+  workflow_dispatch:  # Permite ejecución manual desde GitHub
+
+jobs:
+  actualizar-datos:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout del repositorio
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Configurar Python
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # 3. Instalar Chrome para Selenium
+      - name: Instalar Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # 4. Instalar dependencias
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-scraping.txt
+
+      # 5. Verificar si ya está actualizado
+      - name: Verificar estado de actualización
+        id: check-update
+        run: |
+          python -c "
+          import json
+          from pathlib import Path
+          from datetime import datetime, timedelta
+
+          status_file = Path('master_data/update_status.json')
+
+          # Calcular periodo objetivo
+          hoy = datetime.now()
+          primer_dia = hoy.replace(day=1)
+          mes_anterior = primer_dia - timedelta(days=1)
+
+          meses = {1:'ENERO',2:'FEBRERO',3:'MARZO',4:'ABRIL',5:'MAYO',6:'JUNIO',
+                   7:'JULIO',8:'AGOSTO',9:'SEPTIEMBRE',10:'OCTUBRE',11:'NOVIEMBRE',12:'DICIEMBRE'}
+          periodo_objetivo = f'{meses[mes_anterior.month]} {mes_anterior.year}'
+
+          necesita_actualizar = True
+
+          if status_file.exists():
+              with open(status_file) as f:
+                  estado = json.load(f)
+              ultimo = estado.get('ultimo_periodo_descargado', '')
+              if ultimo == periodo_objetivo:
+                  necesita_actualizar = False
+                  print(f'Ya actualizado: {periodo_objetivo}')
+
+          print(f'NECESITA_ACTUALIZAR={str(necesita_actualizar).lower()}')
+
+          # Guardar para el siguiente paso
+          with open('check_result.txt', 'w') as f:
+              f.write('true' if necesita_actualizar else 'false')
+          "
+          echo "necesita_actualizar=$(cat check_result.txt)" >> $GITHUB_OUTPUT
+
+      # 6. Ejecutar actualización (solo si es necesario)
+      - name: Ejecutar actualización de datos
+        if: steps.check-update.outputs.necesita_actualizar == 'true'
+        id: actualizar
+        run: |
+          python scripts/actualizar_datos.py
+        continue-on-error: true
+
+      # 7. Verificar resultado
+      - name: Verificar archivos generados
+        if: steps.check-update.outputs.necesita_actualizar == 'true'
+        run: |
+          echo "=== Archivos en master_data/ ==="
+          ls -la master_data/ || echo "Carpeta master_data no existe"
+
+          echo ""
+          echo "=== Verificando parquet files ==="
+          for f in master_data/*.parquet; do
+            if [ -f "$f" ]; then
+              size=$(du -h "$f" | cut -f1)
+              echo "✓ $f: $size"
+            fi
+          done
+
+      # 8. Commit y push de los nuevos datos
+      - name: Commit y push de datos actualizados
+        if: steps.check-update.outputs.necesita_actualizar == 'true' && steps.actualizar.outcome == 'success'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Agregar archivos de datos
+          git add master_data/*.parquet master_data/*.json || true
+
+          # Verificar si hay cambios
+          if git diff --staged --quiet; then
+            echo "No hay cambios para commit"
+          else
+            # Obtener periodo del archivo de estado
+            periodo=$(python -c "import json; print(json.load(open('master_data/update_status.json')).get('periodo_objetivo', 'desconocido'))")
+
+            git commit -m "Actualización automática: datos de $periodo
+
+            Actualización automática ejecutada por GitHub Actions.
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+            git push
+            echo "✓ Datos actualizados y publicados"
+          fi
+
+      # 9. Notificar si falló (programar reintento)
+      - name: Registrar intento fallido
+        if: steps.check-update.outputs.necesita_actualizar == 'true' && steps.actualizar.outcome == 'failure'
+        run: |
+          echo "⚠️ La actualización falló. Se reintentará mañana."
+          echo "Esto puede ocurrir si los datos aún no están disponibles en el portal."
+
+          # El workflow se ejecutará nuevamente mañana (está programado del 10-15)
+
+      # 10. Resumen final
+      - name: Resumen
+        run: |
+          echo "=================================="
+          echo "RESUMEN DE EJECUCIÓN"
+          echo "=================================="
+          echo "Fecha: $(date)"
+          echo "Necesitaba actualizar: ${{ steps.check-update.outputs.necesita_actualizar }}"
+          if [ "${{ steps.check-update.outputs.necesita_actualizar }}" == "true" ]; then
+            echo "Resultado actualización: ${{ steps.actualizar.outcome }}"
+          fi
+          echo "=================================="
