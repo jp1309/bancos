@@ -261,11 +261,6 @@ def main():
     idx_fecha = list(fechas).index(fecha_seleccionada)
     fecha_anterior = fechas[idx_fecha + 12] if idx_fecha + 12 < len(fechas) else None
 
-    st.sidebar.markdown("---")
-    st.sidebar.markdown(f"**Datos disponibles:**")
-    st.sidebar.markdown(f"- {calidad.get('bancos', 0)} bancos")
-    st.sidebar.markdown(f"- {calidad.get('fechas', 0)} meses")
-
     # ==========================================================================
     # SECCION 1: KPIs PRINCIPALES
     # ==========================================================================
