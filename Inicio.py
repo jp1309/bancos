@@ -415,6 +415,54 @@ def main():
 
     st.markdown("---")
 
+    # =========================================================================
+    # CROSS-PROMO: RADAR COOPERATIVO
+    # =========================================================================
+
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1a4731 0%, #276749 50%, #2f855a 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 10px 40px rgba(26, 71, 49, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    ">
+        <div style="flex: 1; min-width: 280px;">
+            <h3 style="color: white; margin: 0 0 0.5rem 0; font-size: 1.4rem;">
+                🏦 Conoce también el Radar del Sistema Cooperativo
+            </h3>
+            <p style="color: rgba(255,255,255,0.85); margin: 0; font-size: 0.95rem;">
+                Explora el análisis financiero de las 259 cooperativas de ahorro y crédito del Ecuador:
+                Balance General, Pérdidas y Ganancias e Indicadores CAMEL oficiales de la SEPS.
+            </p>
+        </div>
+        <div style="flex-shrink: 0;">
+            <a href="https://jp1309-cooperativas.streamlit.app"
+               target="_blank"
+               style="
+                   background: white;
+                   color: #1a4731;
+                   padding: 0.75rem 1.5rem;
+                   border-radius: 10px;
+                   text-decoration: none;
+                   font-weight: 600;
+                   font-size: 0.95rem;
+                   display: inline-block;
+                   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+               ">
+                Visitar Radar Cooperativo →
+            </a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
     # Info de datos
     st.markdown("""
     ### 📚 Información del Sistema
