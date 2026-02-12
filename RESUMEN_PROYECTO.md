@@ -2,8 +2,8 @@
 
 ## Dashboard de Business Intelligence para el Sistema Bancario Ecuatoriano
 
-**Versión**: 4.0.0
-**Última actualización**: 26 de enero de 2026
+**Versión**: 4.1.0
+**Última actualización**: 12 de febrero de 2026
 
 ---
 
@@ -12,12 +12,12 @@
 ### 5 Módulos Implementados
 
 ```
+Inicio.py
 pages/
-├── 0_Calidad.py              # ✅ Validación de calidad de datos
-├── 1_Panorama.py             # ✅ Vista general del sistema
-├── 2_Balance_General.py      # ✅ Análisis temporal de balance (3 viz)
-├── 3_Perdidas_Ganancias.py   # ✅ Rentabilidad y resultados (6 viz)
-└── 4_CAMEL.py                # ✅ Indicadores CAMEL (5 viz)
+????????? 1_Panorama.py             # ??? Vista general del sistema
+????????? 2_Balance_General.py      # ??? Analisis temporal de balance
+????????? 3_P??rdidas_y_Ganancias.py # ??? Resultados PYG (evolucion + ranking)
+????????? 4_CAMEL.py                # ??? Indicadores CAMEL
 ```
 
 ---
@@ -28,27 +28,36 @@ pages/
 
 | Archivo | Hoja Excel | Registros | Descripción | Tamaño |
 |---------|------------|-----------|-------------|--------|
-| `balance.parquet` | BAL | 8,300,000+ | Balance General | 18 MB |
-| `pyg.parquet` | PYG | 769,792 | Pérdidas y Ganancias (desacumulado + 12M) | 9.5 MB |
-| `camel.parquet` | CAMEL | 233,680 | 39 Indicadores CAMEL categorizados | 1.6 MB |
+| `balance.parquet` | BAL | 7,993,228 | Balance General | 18.6 MB |
+| `pyg.parquet` | PYG | 740,864 | Pérdidas y Ganancias (desacumulado + 12M) | 9.3 MB |
+| `camel.parquet` | CAMEL | 225,617 | 39 Indicadores CAMEL categorizados | 1.5 MB |
 
-**Total**: 29.1 MB de datos estructurados (reducción del 22% vs versión anterior)
-**Periodo**: Enero 2003 - Diciembre 2025 (23 años, 276 meses)
-**Bancos**: 24 instituciones financieras
+**Total**: 29.4 MB de datos estructurados
+**Periodo**: Enero 2003 - Enero 2026 (23 años, 277 meses)
+**Bancos**: 23 instituciones financieras
 **Hojas procesadas**: Solo las 3 hojas esenciales (BAL, PYG, CAMEL)
 
 ---
 
 ## 🔧 Scripts de Procesamiento
 
-### 1. `descargar.py`
-Descarga automática de archivos Excel desde la Superintendencia de Bancos.
+### 0. `config.py`
+Configuracion centralizada que calcula automaticamente el periodo objetivo.
 
 **Funcionalidad**:
-- Descarga mensual de enero 2003 a diciembre 2025
-- Organización por año/mes
-- Detección de duplicados
-- 276 archivos históricos
+- Calcula periodo objetivo (mes anterior a la fecha actual)
+- Genera nombre de carpeta dinamico (`datos_bancos_{mes}_{ano}`)
+- URL del portal de la Superintendencia de Bancos
+- Todos los scripts de procesamiento importan sus rutas desde aqui
+
+### 1. `descargar.py`
+Descarga automatica de archivos Excel desde la Superintendencia de Bancos via Selenium.
+
+**Funcionalidad**:
+- Navega al portal web y descarga ZIPs de cada banco
+- Descomprime y organiza archivos Excel
+- Cada Excel contiene toda la historia (2003-presente)
+- 23 bancos activos
 
 ### 2. `procesar_balance.py`
 Procesa la hoja BAL (Balance General).
@@ -76,7 +85,7 @@ Procesa la hoja CAMEL (Indicadores Financieros).
 - Incluye composición de cartera por tipo de crédito
 - Genera `camel.parquet`
 
-**Nota**: El script `crear_master.py` fue eliminado. Solo procesamos las 3 hojas esenciales (BAL, PYG, CAMEL).
+**Nota**: El script `crear_master.py (eliminado)` fue eliminado. Solo procesamos las 3 hojas esenciales (BAL, PYG, CAMEL).
 
 ---
 
@@ -162,27 +171,33 @@ cd bancos
 pip install -r requirements.txt
 
 # Ejecutar dashboard
-streamlit run app.py
+streamlit run Inicio.py
 ```
 
 ### Flujo de Trabajo
 
-1. **Descarga de datos**:
-   ```bash
-   python descargar.py
-   ```
+**Actualizacion automatica** (recomendado):
+```bash
+python scripts/actualizar_datos.py
+```
+Esto ejecuta todo el pipeline: descarga, procesamiento (balance, PyG, CAMEL), verificacion y limpieza.
 
-2. **Procesamiento**:
-   ```bash
-   python procesar_balance.py
-   python procesar_pyg.py
-   python crear_master.py  # Para otros archivos
-   ```
+**Actualizacion manual** (paso a paso):
+```bash
+python scripts/descargar.py           # Descarga ZIPs del portal
+python scripts/procesar_balance.py    # Genera balance.parquet
+python scripts/procesar_pyg.py        # Genera pyg.parquet
+python scripts/procesar_camel.py      # Genera camel.parquet
+```
 
-3. **Dashboard**:
-   ```bash
-   streamlit run app.py
-   ```
+**GitHub Actions**: Se ejecuta automaticamente los dias 10-15 de cada mes.
+El archivo `master_data/update_status.json` registra el ultimo periodo procesado
+para evitar descargas duplicadas.
+
+**Dashboard**:
+```bash
+streamlit run Inicio.py
+```
 
 ---
 
@@ -281,10 +296,10 @@ streamlit run app.py
 - **Streamlit** para interface web
 
 ### Datos
-- **23 años** de historia (2003-2025)
-- **24 bancos** ecuatorianos
-- **13+ millones** de registros procesados
-- **276 meses** de información
+- **23 años** de historia (2003-2026)
+- **23 bancos** ecuatorianos activos
+- **~9 millones** de registros procesados
+- **277 meses** de informacion
 
 ---
 
@@ -326,5 +341,5 @@ streamlit run app.py
 ---
 
 **Desarrollado por**: Dashboard Radar Bancario Ecuador
-**Versión actual**: 4.0.0
-**Última actualización**: 26 de enero de 2026
+**Version actual**: 4.1.0
+**Ultima actualizacion**: 12 de febrero de 2026

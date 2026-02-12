@@ -44,7 +44,12 @@ STATUS_FILE = MASTER_DATA_DIR / "update_status.json"
 def log(mensaje: str, nivel: str = "INFO"):
     """Imprime mensaje con timestamp."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] [{nivel}] {mensaje}")
+    try:
+        print(f"[{timestamp}] [{nivel}] {mensaje}")
+    except UnicodeEncodeError:
+        # Fallback para consolas Windows con encoding cp1252
+        mensaje_ascii = mensaje.encode('ascii', errors='replace').decode('ascii')
+        print(f"[{timestamp}] [{nivel}] {mensaje_ascii}")
 
 
 def cargar_estado() -> dict:
@@ -105,19 +110,19 @@ def ejecutar_script(script_name: str) -> bool:
         )
 
         if result.returncode == 0:
-            log(f"✓ {script_name} completado exitosamente")
+            log(f"[OK] {script_name} completado exitosamente")
             return True
         else:
-            log(f"✗ {script_name} falló con código {result.returncode}", "ERROR")
+            log(f"[FAIL] {script_name} fallo con codigo {result.returncode}", "ERROR")
             if result.stderr:
                 log(f"  Error: {result.stderr[:500]}", "ERROR")
             return False
 
     except subprocess.TimeoutExpired:
-        log(f"✗ {script_name} excedió el tiempo límite", "ERROR")
+        log(f"[FAIL] {script_name} excedio el tiempo limite", "ERROR")
         return False
     except Exception as e:
-        log(f"✗ Error ejecutando {script_name}: {e}", "ERROR")
+        log(f"[FAIL] Error ejecutando {script_name}: {e}", "ERROR")
         return False
 
 
@@ -185,9 +190,9 @@ def verificar_archivos_generados() -> bool:
         ruta = MASTER_DATA_DIR / archivo
         if ruta.exists():
             tamano_mb = ruta.stat().st_size / (1024 * 1024)
-            log(f"  ✓ {archivo}: {tamano_mb:.2f} MB")
+            log(f"  [OK] {archivo}: {tamano_mb:.2f} MB")
         else:
-            log(f"  ✗ {archivo}: NO ENCONTRADO", "ERROR")
+            log(f"  [FAIL] {archivo}: NO ENCONTRADO", "ERROR")
             todos_ok = False
 
     return todos_ok
@@ -227,10 +232,10 @@ def generar_reporte(exitoso: bool, pasos_completados: list):
 
     if exitoso:
         estado['ultimo_periodo_descargado'] = config.PERIODO_DESCARGA
-        log(f"✓ ACTUALIZACIÓN EXITOSA")
+        log(f"[OK] ACTUALIZACION EXITOSA")
         log(f"  Periodo: {config.PERIODO_DESCARGA}")
     else:
-        log(f"✗ ACTUALIZACIÓN FALLIDA", "ERROR")
+        log(f"[FAIL] ACTUALIZACION FALLIDA", "ERROR")
         log(f"  Pasos completados: {pasos_completados}")
 
     guardar_estado(estado)

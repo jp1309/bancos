@@ -1,0 +1,7 @@
+{
+  "fecha_ejecucion": "2026-02-12T08:34:19",
+  "periodo_objetivo": "ENERO 2026",
+  "exitoso": true,
+  "pasos_completados": ["descarga", "balance", "pyg", "camel", "verificacion"],
+  "ultimo_periodo_descargado": "ENERO 2026"
+}
