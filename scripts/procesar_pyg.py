@@ -18,12 +18,17 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime
+import sys
 import warnings
 
 warnings.filterwarnings('ignore')
 
+# Agregar directorio de scripts al path para importar config
+sys.path.insert(0, str(Path(__file__).parent))
+import config
+
 # Configuración
-CARPETA_DATOS = Path("datos_bancos_diciembre_2025/archivos_excel")
+CARPETA_DATOS = Path(config.get_carpeta_salida()) / "archivos_excel"
 CARPETA_SALIDA = Path("master_data")
 
 # Códigos para cuentas resumen (filas con "--")

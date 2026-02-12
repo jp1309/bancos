@@ -468,9 +468,9 @@ def main():
     ### 📚 Información del Sistema
 
     **Fuente de Datos:** Superintendencia de Bancos del Ecuador - Catálogo Único de Cuentas
-    **Período Cubierto:** Enero 2003 - Diciembre 2025 (276 meses)
+    **Período Cubierto:** Enero 2003 - Enero 2026 (277 meses)
     **Instituciones:** 23 bancos activos del sistema privado
-    **Formato:** Archivos Parquet optimizados (~15.9 millones de registros)
+    **Formato:** Archivos Parquet optimizados (~8 millones de registros)
 
     Los datos son actualizados mensualmente y procesados con validaciones de calidad
     para garantizar consultas rápidas y eficientes.

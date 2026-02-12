@@ -14,12 +14,17 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime
+import sys
 import warnings
 
 warnings.filterwarnings('ignore')
 
+# Agregar directorio de scripts al path para importar config
+sys.path.insert(0, str(Path(__file__).parent))
+import config
+
 # Configuracion
-DATOS_DIR = Path("datos_bancos_diciembre_2025/archivos_excel")
+DATOS_DIR = Path(config.get_carpeta_salida()) / "archivos_excel"
 OUTPUT_DIR = Path("master_data")
 OUTPUT_DIR.mkdir(exist_ok=True)
 

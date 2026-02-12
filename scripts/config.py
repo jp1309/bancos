@@ -53,17 +53,17 @@ ANO_BUSCAR = ANO_OBJETIVO
 # =============================================================================
 
 # URL del portal de la Superintendencia de Bancos
-URL_PORTAL = "https://www.superbancos.gob.ec/estadisticas/portalestudios/boletines-financieros-mensuales/"
+URL_PORTAL = "https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos-2/"
 
 # Texto para buscar la carpeta de boletines
-CARPETA_BOLETINES_TEXTO = "Boletines Mensuales de entidades"
+CARPETA_BOLETINES_TEXTO = "Boletines de Series por Entidad"
 
 # =============================================================================
 # CONFIGURACIÓN DE DESCARGA
 # =============================================================================
 
 # Número esperado de bancos (puede variar por fusiones/cierres)
-NUMERO_ESPERADO_BANCOS = 24
+NUMERO_ESPERADO_BANCOS = 23
 
 # Timeout para descargas (en segundos)
 TIMEOUT_DESCARGA = 120

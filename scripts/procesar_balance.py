@@ -18,12 +18,17 @@ from pathlib import Path
 from datetime import datetime
 import re
 import json
+import sys
+
+# Agregar directorio de scripts al path para importar config
+sys.path.insert(0, str(Path(__file__).parent))
+import config
 
 # =============================================================================
 # CONFIGURACION
 # =============================================================================
 
-EXCEL_DIR = Path("datos_bancos_diciembre_2025/archivos_excel")
+EXCEL_DIR = Path(config.get_carpeta_salida()) / "archivos_excel"
 MASTER_DIR = Path("master_data")
 
 # Crear directorio si no existe
