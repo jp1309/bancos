@@ -86,10 +86,13 @@ CHROME_MAXIMIZADO = True
 # TIEMPOS DE ESPERA (en segundos)
 # =============================================================================
 
-TIEMPO_CARGA_PAGINA = 10
-TIEMPO_ENTRE_SCROLL = 2
-TIEMPO_DESPUES_CLIC = 5
-TIEMPO_CARGA_ARCHIVOS = 10
+# En GitHub Actions se necesitan tiempos más largos por el headless y la red
+_EN_CI = os.environ.get('GITHUB_ACTIONS', 'false').lower() == 'true'
+
+TIEMPO_CARGA_PAGINA = 20 if _EN_CI else 10
+TIEMPO_ENTRE_SCROLL = 3 if _EN_CI else 2
+TIEMPO_DESPUES_CLIC = 8 if _EN_CI else 5
+TIEMPO_CARGA_ARCHIVOS = 15 if _EN_CI else 10
 
 # =============================================================================
 # CARPETAS DE SALIDA

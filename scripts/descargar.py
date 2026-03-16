@@ -35,6 +35,8 @@ try:
     from selenium.webdriver.common.by import By
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
     from webdriver_manager.chrome import ChromeDriverManager
     import time
     import zipfile
@@ -68,9 +70,13 @@ def main():
         chrome_options.add_argument("--start-maximized")
 
     if config.CHROME_HEADLESS:
-        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless=new")
 
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920,1080")
 
     # Crear carpeta de salida
     download_dir = os.path.join(os.getcwd(), config.get_carpeta_salida())
@@ -91,15 +97,53 @@ def main():
         driver.execute_script("window.scrollTo(0, 800);")
         time.sleep(config.TIEMPO_ENTRE_SCROLL)
 
-        # PASO 2: Clic en año
+        # PASO 2: Clic en año (con reintentos para contenido dinámico)
         print(f"[2/5] Buscando y haciendo clic en 'Año {config.ANO_BUSCAR}'...")
 
         xpath_ano = config.get_ano_xpath()
-        ano_elements = driver.find_elements(By.XPATH, xpath_ano)
+
+        # Esperar hasta 60 segundos a que aparezca el elemento del año
+        ano_elements = []
+        max_intentos = 6
+        for intento in range(max_intentos):
+            ano_elements = driver.find_elements(By.XPATH, xpath_ano)
+            if ano_elements:
+                break
+            print(f"  Esperando contenido dinámico... (intento {intento + 1}/{max_intentos})")
+            # Scroll para forzar carga lazy
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(5)
+            driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(5)
 
         if not ano_elements:
-            print(f"  ✗ No se encontró la carpeta 'Año {config.ANO_BUSCAR}'")
-            print(f"  Verifica que la carpeta existe en: {config.URL_PORTAL}")
+            # Último intento: recargar la página completamente
+            print(f"  Recargando página para segundo intento...")
+            driver.refresh()
+            time.sleep(config.TIEMPO_CARGA_PAGINA + 10)
+            driver.execute_script("window.scrollTo(0, 800);")
+            time.sleep(5)
+
+            for intento in range(3):
+                ano_elements = driver.find_elements(By.XPATH, xpath_ano)
+                if ano_elements:
+                    break
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(5)
+                driver.execute_script("window.scrollTo(0, 0);")
+                time.sleep(5)
+
+        if not ano_elements:
+            # Mostrar qué carpetas SÍ existen para diagnóstico
+            all_entries = driver.find_elements(By.XPATH, "//*[contains(text(), 'Año')]")
+            if all_entries:
+                print(f"  Carpetas encontradas:")
+                for e in all_entries:
+                    print(f"    - {e.text}")
+            else:
+                print(f"  No se encontraron carpetas de año en la página")
+                page_text = driver.find_element(By.TAG_NAME, "body").text[:500]
+                print(f"  Contenido visible: {page_text[:200]}")
             raise Exception(f"Carpeta 'Año {config.ANO_BUSCAR}' no encontrada")
 
         for elem in ano_elements:
@@ -388,8 +432,11 @@ def main():
         sys.exit(1)
 
     finally:
-        print("\nCerrando navegador en 10 segundos...")
-        time.sleep(10)
+        if config.CHROME_HEADLESS:
+            print("\nCerrando navegador...")
+        else:
+            print("\nCerrando navegador en 10 segundos...")
+            time.sleep(10)
         driver.quit()
 
 if __name__ == "__main__":
