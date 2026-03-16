@@ -114,8 +114,10 @@ def ejecutar_script(script_name: str) -> bool:
             return True
         else:
             log(f"[FAIL] {script_name} fallo con codigo {result.returncode}", "ERROR")
+            if result.stdout:
+                log(f"  Salida: {result.stdout[-1000:]}", "ERROR")
             if result.stderr:
-                log(f"  Error: {result.stderr[:500]}", "ERROR")
+                log(f"  Error: {result.stderr[-1000:]}", "ERROR")
             return False
 
     except subprocess.TimeoutExpired:
