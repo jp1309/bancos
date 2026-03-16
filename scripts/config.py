@@ -53,7 +53,7 @@ ANO_BUSCAR = ANO_OBJETIVO
 # =============================================================================
 
 # URL del portal de la Superintendencia de Bancos
-URL_PORTAL = "https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos-2/"
+URL_PORTAL = "https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos/"
 
 # Texto para buscar la carpeta de boletines
 CARPETA_BOLETINES_TEXTO = "Boletines de Series por Entidad"

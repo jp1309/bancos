@@ -9,6 +9,9 @@ on:
     - cron: '0 13 10-15 * *'  # Del 10 al 15 de cada mes a las 08:00 Ecuador
   workflow_dispatch:  # Permite ejecución manual desde GitHub
 
+permissions:
+  contents: write
+
 jobs:
   actualizar-datos:
     runs-on: ubuntu-latest
