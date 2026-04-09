@@ -6,7 +6,15 @@ on:
   schedule:
     # Cron: minuto hora día-del-mes mes día-de-semana
     # 13:00 UTC = 08:00 Ecuador (UTC-5)
-    - cron: '0 13 10-15 * *'  # Del 10 al 15 de cada mes a las 08:00 Ecuador
+    # Intento principal el día 6, reintentos cada 2 días hasta el 20
+    - cron: '0 13 6 * *'   # Día 6  - intento principal
+    - cron: '0 13 8 * *'   # Día 8  - 1er reintento
+    - cron: '0 13 10 * *'  # Día 10 - 2do reintento
+    - cron: '0 13 12 * *'  # Día 12 - 3er reintento
+    - cron: '0 13 14 * *'  # Día 14 - 4to reintento
+    - cron: '0 13 16 * *'  # Día 16 - 5to reintento
+    - cron: '0 13 18 * *'  # Día 18 - 6to reintento
+    - cron: '0 13 20 * *'  # Día 20 - último reintento
   workflow_dispatch:  # Permite ejecución manual desde GitHub
 
 permissions:
