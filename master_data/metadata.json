@@ -1,9 +1,10 @@
 {
-  "ultima_actualizacion": "2026-03-16T11:43:30.914798",
+  "ultima_actualizacion": "2026-04-09T10:50:41.135323",
   "bancos_procesados": [
     "Amazonas",
     "Atlantida",
     "Austro",
+    "Bolivariano",
     "Bolivariano",
     "Capital",
     "Citibank",
@@ -26,10 +27,10 @@
     "Visionfund"
   ],
   "bancos_error": [],
-  "total_bancos": 23,
-  "total_registros": 8024991,
+  "total_bancos": 24,
+  "total_registros": 8440672,
   "fecha_min": "2003-01-31 00:00:00",
-  "fecha_max": "2026-02-28 00:00:00",
+  "fecha_max": "2026-03-31 00:00:00",
   "hojas_procesadas": [
     "BAL"
   ]
