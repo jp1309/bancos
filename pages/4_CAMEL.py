@@ -351,7 +351,7 @@ def crear_grafico_evolucion(df: pd.DataFrame, codigo: str, bancos: list, nombre_
         hovermode='x unified',
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def crear_ranking_barras(df: pd.DataFrame, codigo: str, fecha, nombre_indicador: str,
@@ -387,7 +387,7 @@ def crear_ranking_barras(df: pd.DataFrame, codigo: str, fecha, nombre_indicador:
         yaxis=dict(categoryorder='total ascending'),
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Mostrar nota si la fecha real es diferente a la solicitada
     if fecha_real != fecha:
@@ -455,7 +455,7 @@ def crear_heatmap_indicador(df: pd.DataFrame, codigo: str, nombre_indicador: str
         xaxis={'tickangle': -45},
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # =============================================================================

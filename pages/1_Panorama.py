@@ -341,7 +341,7 @@ def main():
                 jerarquico=True,
                 altura=500
             )
-            st.plotly_chart(fig_tree, use_container_width=True)
+            st.plotly_chart(fig_tree, width="stretch")
         else:
             st.warning("No hay datos de activos disponibles para esta fecha.")
 
@@ -364,7 +364,7 @@ def main():
             )
             # Ajustar altura segun cantidad de bancos
             fig_rank.update_layout(height=max(400, len(ranking) * 25))
-            st.plotly_chart(fig_rank, use_container_width=True)
+            st.plotly_chart(fig_rank, width="stretch")
 
     st.markdown("---")
 
@@ -385,7 +385,7 @@ def main():
                 jerarquico=True,
                 altura=500
             )
-            st.plotly_chart(fig_tree_pas, use_container_width=True)
+            st.plotly_chart(fig_tree_pas, width="stretch")
         else:
             st.warning("No hay datos de pasivos disponibles para esta fecha.")
 
@@ -408,7 +408,7 @@ def main():
             )
             # Ajustar altura segun cantidad de bancos
             fig_rank_pas.update_layout(height=max(400, len(ranking_pasivos) * 25))
-            st.plotly_chart(fig_rank_pas, use_container_width=True)
+            st.plotly_chart(fig_rank_pas, width="stretch")
 
     st.markdown("---")
 
@@ -479,7 +479,7 @@ def main():
             # Línea de referencia en 0
             fig_cartera.add_vline(x=0, line_dash="dash", line_color="gray", line_width=1)
 
-            st.plotly_chart(fig_cartera, use_container_width=True)
+            st.plotly_chart(fig_cartera, width="stretch")
         else:
             st.info("No hay datos del año anterior para comparar.")
 
@@ -541,7 +541,7 @@ def main():
             # Línea de referencia en 0
             fig_depositos.add_vline(x=0, line_dash="dash", line_color="gray", line_width=1)
 
-            st.plotly_chart(fig_depositos, use_container_width=True)
+            st.plotly_chart(fig_depositos, width="stretch")
         else:
             st.info("No hay datos del año anterior para comparar.")
 

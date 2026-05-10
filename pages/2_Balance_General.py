@@ -510,7 +510,7 @@ def main():
                 margin=dict(l=10, r=10, t=40, b=80)
             )
 
-            st.plotly_chart(fig_evol, use_container_width=True)
+            st.plotly_chart(fig_evol, width="stretch")
         else:
             st.info("Selecciona al menos un banco para visualizar.")
 
@@ -708,7 +708,7 @@ def main():
                 margin=dict(l=10, r=10, t=40, b=80)
             )
 
-            st.plotly_chart(fig_heat, use_container_width=True)
+            st.plotly_chart(fig_heat, width="stretch")
         else:
             st.warning("No hay datos suficientes para el heatmap.")
 
@@ -889,7 +889,7 @@ def main():
             yaxis=dict(autorange="reversed")  # Mayor valor arriba
         )
 
-        st.plotly_chart(fig_ranking, use_container_width=True)
+        st.plotly_chart(fig_ranking, width="stretch")
 
         # Estadisticas
         col_s1, col_s2, col_s3 = st.columns(3)
