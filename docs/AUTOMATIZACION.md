@@ -68,8 +68,8 @@ El sistema descarga automáticamente los datos de la Superintendencia de Bancos 
 ### 1. Workflow de GitHub Actions
 **Archivo:** `.github/workflows/actualizar-datos.yml`
 
-- **Cuándo se ejecuta:** Del día 10 al 15 de cada mes a las 8:00 AM (hora Ecuador)
-- **Por qué del 10 al 15:** La Superintendencia publica los datos el día 10, pero a veces hay retrasos
+- **Cuándo se ejecuta:** Días 6, 8, 10, 12, 14, 16, 18 y 20 de cada mes a las 8:00 AM (hora Ecuador)
+- **Por qué desde el día 6:** La SBS a veces publica antes del día 10. El script detecta si los datos son realmente nuevos comparando contra la `fecha_max` del parquet.
 - **Ejecución manual:** También se puede ejecutar manualmente desde GitHub Actions
 
 ### 2. Configuración
@@ -125,10 +125,11 @@ Diciembre → El día 10 se descargan datos de Noviembre
 
 ## Manejo de Errores
 
-### Si los datos no están disponibles el día 10:
-- El workflow falla pero registra el intento
-- Se vuelve a ejecutar automáticamente el día 11, 12, 13, 14 o 15
-- Una vez que los datos están disponibles, se descargan y procesan
+### Si los datos no están disponibles el día 6:
+- El workflow descarga el ZIP disponible, procesa, y verifica la `fecha_max` real del parquet
+- Si el parquet no avanzó al mes esperado, guarda el período real (no el objetivo) en `update_status.json`
+- Se vuelve a ejecutar automáticamente cada 2 días (8, 10, 12... hasta el 20)
+- Cada reintento verifica la `fecha_max` real del parquet antes de decidir si hay que descargar
 
 ### Si el procesamiento falla:
 - El estado queda como "fallido" en `update_status.json`
@@ -243,7 +244,13 @@ Verificar en https://share.streamlit.io que la app apunte al branch `main`.
 ### Los datos se descargaron pero no aparecen en la app
 1. Verificar que el push fue exitoso (revisar commits en GitHub)
 2. Verificar que Streamlit Cloud detectó el cambio (puede tardar unos minutos)
-3. Forzar reinicio desde https://share.streamlit.io
+3. Forzar reinicio desde https://share.streamlit.io → **Reboot app**
+
+### La app muestra un mes menos de lo esperado (ej. marzo en vez de abril)
+- **Causa:** El workflow marcó un período como descargado aunque el portal no lo había publicado aún
+- **Diagnóstico:** `python -c "import pandas as pd; df=pd.read_parquet('master_data/balance.parquet', columns=['fecha']); print(df['fecha'].max())"`
+- **Solución rápida:** Editar `master_data/update_status.json` → cambiar `ultimo_periodo_descargado` al período real (ej. "MARZO 2026") y disparar el workflow manualmente
+- **Nota:** Este bug fue corregido en mayo 2026. El script ahora verifica la `fecha_max` del parquet real, no el período objetivo
 
 ### Ejecutar manualmente desde CLI
 ```bash
@@ -267,6 +274,15 @@ gh run view $(gh run list --workflow="Actualizar Datos Bancarios" --limit=1 --js
 - Tiempos de espera insuficientes para carga dinámica del portal en headless
 **Solución:** Cambiar default a `main`, agregar `permissions: contents: write`, mejorar reintentos del scraping.
 **Lección:** Siempre verificar que el default branch sea el correcto después de crear un repo.
+
+### Mayo 2026: App mostraba marzo cuando debería mostrar abril
+**Síntoma:** Workflow del 6 de mayo reportó éxito con "ABRIL 2026" pero el parquet real solo llegaba hasta marzo.
+**Causa raíz:** `actualizar_datos.py` guardaba en `update_status.json` el *período objetivo* (mes anterior a la fecha de ejecución) sin verificar si los datos del parquet realmente cambiaron. Cuando el portal SBS no había publicado abril aún, descargaba el mismo ZIP de antes, procesaba sin cambios, y marcaba "ABRIL" como actualizado. Los reintentos del 8, 10, 12... se saltaban todos pensando que ya estaba listo.
+**Solución:**
+1. `verificar_datos_ya_actualizados()` ahora lee `fecha_max` directamente del parquet real
+2. `generar_reporte()` ahora guarda el período real del parquet, no el objetivo
+3. Se corrigió manualmente `update_status.json` para forzar el próximo reintento
+**Lección:** Siempre verificar el estado real de los datos (parquet), no confiar en archivos de estado que pueden quedar desincronizados con la realidad.
 
 ## Notas Importantes
 
