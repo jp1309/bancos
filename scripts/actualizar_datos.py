@@ -70,18 +70,31 @@ def guardar_estado(estado: dict):
 def verificar_datos_ya_actualizados() -> bool:
     """
     Verifica si los datos del mes objetivo ya fueron descargados.
+    Compara contra la fecha_max real del parquet, no contra update_status.json,
+    para evitar falsos positivos cuando el portal no publicó el mes aún.
 
     Returns:
         bool: True si ya están actualizados, False si necesita actualizar.
     """
-    estado = cargar_estado()
-    ultimo_periodo = estado.get('ultimo_periodo_descargado', '')
-
     periodo_actual = config.PERIODO_DESCARGA
 
-    if ultimo_periodo == periodo_actual:
-        log(f"Los datos de {periodo_actual} ya fueron descargados previamente")
-        return True
+    # Verificar contra la fecha_max real del parquet
+    parquet_path = MASTER_DATA_DIR / "balance.parquet"
+    if parquet_path.exists():
+        try:
+            import pandas as pd
+            df = pd.read_parquet(parquet_path, columns=["fecha"])
+            fecha_max = df["fecha"].max()
+            meses = {1:'ENERO',2:'FEBRERO',3:'MARZO',4:'ABRIL',5:'MAYO',6:'JUNIO',
+                     7:'JULIO',8:'AGOSTO',9:'SEPTIEMBRE',10:'OCTUBRE',11:'NOVIEMBRE',12:'DICIEMBRE'}
+            periodo_real = f"{meses[fecha_max.month]} {fecha_max.year}"
+            log(f"  Datos actuales en parquet hasta: {periodo_real}")
+            log(f"  Periodo objetivo: {periodo_actual}")
+            if periodo_real == periodo_actual:
+                log(f"Los datos de {periodo_actual} ya están en el parquet")
+                return True
+        except Exception as e:
+            log(f"  No se pudo leer parquet para verificar: {e}", "WARNING")
 
     log(f"Datos pendientes de descargar: {periodo_actual}")
     return False
@@ -233,9 +246,25 @@ def generar_reporte(exitoso: bool, pasos_completados: list):
     }
 
     if exitoso:
-        estado['ultimo_periodo_descargado'] = config.PERIODO_DESCARGA
+        # Verificar la fecha máxima real del parquet generado
+        periodo_real = config.PERIODO_DESCARGA
+        try:
+            import pandas as pd
+            df = pd.read_parquet(MASTER_DATA_DIR / "balance.parquet", columns=["fecha"])
+            fecha_max = df["fecha"].max()
+            meses = {1:'ENERO',2:'FEBRERO',3:'MARZO',4:'ABRIL',5:'MAYO',6:'JUNIO',
+                     7:'JULIO',8:'AGOSTO',9:'SEPTIEMBRE',10:'OCTUBRE',11:'NOVIEMBRE',12:'DICIEMBRE'}
+            periodo_real = f"{meses[fecha_max.month]} {fecha_max.year}"
+            log(f"  Fecha máxima real en parquet: {fecha_max.strftime('%Y-%m-%d')} → {periodo_real}")
+        except Exception as e:
+            log(f"  No se pudo leer fecha_max del parquet: {e}", "WARNING")
+
+        estado['ultimo_periodo_descargado'] = periodo_real
         log(f"[OK] ACTUALIZACION EXITOSA")
-        log(f"  Periodo: {config.PERIODO_DESCARGA}")
+        log(f"  Periodo objetivo: {config.PERIODO_DESCARGA}")
+        log(f"  Periodo real en datos: {periodo_real}")
+        if periodo_real != config.PERIODO_DESCARGA:
+            log(f"  AVISO: Los datos solo llegan hasta {periodo_real}, no hasta {config.PERIODO_DESCARGA}", "WARNING")
     else:
         log(f"[FAIL] ACTUALIZACION FALLIDA", "ERROR")
         log(f"  Pasos completados: {pasos_completados}")
