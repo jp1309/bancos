@@ -1,19 +1,18 @@
 {
-  "ultima_actualizacion": "2026-05-06T15:30:04.360797",
+  "ultima_actualizacion": "2026-05-10T14:14:15.494119",
   "bancos_procesados": [
     "Amazonas",
     "Atlantida",
     "Austro",
     "Bolivariano",
-    "Bolivariano",
     "Capital",
     "Citibank",
     "Codesarrollo",
-    "Comercial Manabí",
+    "Comercial Manabí",
     "Coopnacional",
     "DelBank",
     "Diners",
-    "Gral. Rumiñahui",
+    "General Rumiñahui",
     "Guayaquil",
     "Internacional",
     "Litoral",
@@ -27,10 +26,10 @@
     "Visionfund"
   ],
   "bancos_error": [],
-  "total_bancos": 24,
-  "total_registros": 8440672,
+  "total_bancos": 23,
+  "total_registros": 8088517,
   "fecha_min": "2003-01-31 00:00:00",
-  "fecha_max": "2026-03-31 00:00:00",
+  "fecha_max": "2026-04-30 00:00:00",
   "hojas_procesadas": [
     "BAL"
   ]

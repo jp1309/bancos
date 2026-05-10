@@ -1,5 +1,5 @@
 {
-  "fecha_ejecucion": "2026-05-06T15:31:46.044716",
+  "fecha_ejecucion": "2026-05-10T14:15:46.409944",
   "periodo_objetivo": "ABRIL 2026",
   "exitoso": true,
   "pasos_completados": [
@@ -9,5 +9,5 @@
     "camel",
     "verificacion"
   ],
-  "ultimo_periodo_descargado": "MARZO 2026"
+  "ultimo_periodo_descargado": "ABRIL 2026"
 }
