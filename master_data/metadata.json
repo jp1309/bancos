@@ -1,5 +1,5 @@
 {
-  "ultima_actualizacion": "2026-06-06T14:30:50.826898",
+  "ultima_actualizacion": "2026-07-06T16:19:10.056386",
   "bancos_procesados": [
     "Amazonas",
     "Atlantida",
@@ -27,7 +27,7 @@
   ],
   "bancos_error": [],
   "total_bancos": 23,
-  "total_registros": 8118899,
+  "total_registros": 8120280,
   "fecha_min": "2003-01-31 00:00:00",
   "fecha_max": "2026-05-31 00:00:00",
   "hojas_procesadas": [
