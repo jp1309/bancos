@@ -12,6 +12,7 @@ Este script genera: master_data/camel.parquet
 
 import pandas as pd
 import numpy as np
+import re
 from pathlib import Path
 from datetime import datetime
 import sys
@@ -88,13 +89,13 @@ INDICADORES_CAMEL = {
 
 
 def extraer_nombre_banco(ruta_archivo: Path) -> str:
-    """Extrae el nombre del banco de la ruta del archivo."""
+    """Extrae el nombre del banco de la ruta del archivo, quitando el sufijo MES AÑO."""
     nombre_carpeta = ruta_archivo.parent.name
-    # Formato: "Banco FECHA" -> extraer "Banco"
-    partes = nombre_carpeta.rsplit(' ', 2)  # Separar por espacios desde el final
-    if len(partes) >= 3:
-        return partes[0]  # Nombre del banco
-    return nombre_carpeta.split(' ')[0]
+    nombre = re.sub(
+        r'\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{4}$',
+        '', nombre_carpeta, flags=re.IGNORECASE
+    )
+    return nombre.strip()
 
 
 def procesar_archivo_camel(ruta_archivo: Path) -> pd.DataFrame:

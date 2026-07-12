@@ -13,6 +13,7 @@ CONFIGURACIÓN:
 
 import sys
 import os
+import re
 
 # Importar configuración
 try:
@@ -355,7 +356,7 @@ def main():
             for idx, zip_filename in enumerate(archivos_zip, 1):
                 try:
                     zip_path = os.path.join(download_dir, zip_filename)
-                    banco_name = zip_filename.replace('.zip', '').replace('Series Banco ', '')
+                    banco_name = re.sub(r'^Series\s*Banco\s*', '', zip_filename.replace('.zip', ''), flags=re.IGNORECASE)
 
                     print(f"[{idx:3}/{len(archivos_zip)}] {banco_name[:45]:45} ... ", end='', flush=True)
 

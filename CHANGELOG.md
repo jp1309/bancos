@@ -1,3 +1,5 @@
+Nota: Este changelog incluye entradas historicas de modulos y archivos que ya no existen en el repo actual.
+
 # Changelog - Sistema de Inteligencia Financiera
 
 Registro de cambios y mejoras del dashboard de Business Intelligence.

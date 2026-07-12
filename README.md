@@ -14,8 +14,8 @@ El dashboard cuenta con 4 módulos principales que permiten analizar diferentes 
 
 - **Origen**: Superintendencia de Bancos del Ecuador - Catálogo Único de Cuentas
 - **Período cubierto**: 2003-2025 (276 meses)
-- **Instituciones**: 23 bancos activos (de 24 registrados)
-- **Registros**: ~15.9 millones de filas
+- **Instituciones**: 23-24 bancos (segun disponibilidad en el periodo)
+- **Registros**: ~15.9 millones de filas (solo BAL, PYG, CAMEL)
 - **Formato**: Archivos Parquet optimizados
 
 ### Estructura de Datos
@@ -23,8 +23,9 @@ El dashboard cuenta con 4 módulos principales que permiten analizar diferentes 
 Archivos en `master_data/`:
 - `balance.parquet` - Balance General (Activos, Pasivos, Patrimonio)
 - `pyg.parquet` - Estado de Resultados (Ingresos y Gastos)
-- `indicadores.parquet` - Indicadores financieros calculados
-- `camel.parquet` - Ratios CAMEL
+- `camel.parquet` - Indicadores CAMEL
+- `metadata.json` - Info de ultima actualizacion
+- `update_status.json` - Estado del proceso
 
 Columnas principales:
 - `banco`: Nombre de la institución financiera
@@ -136,7 +137,7 @@ Mejoras implementadas:
 - ✅ Reorganización de layout para mejor UX (2026-01-30)
 - ✅ Validación automática de jerarquías disponibles
 
-### 3. Pérdidas y Ganancias (3_Perdidas_Ganancias.py)
+### 3. Pérdidas y Ganancias (3_P??rdidas_y_Ganancias.py)
 **Estado**: ✅ Completado
 
 Análisis de resultados y rentabilidad del sistema bancario ecuatoriano basado en estados de resultados acumulados a 12 meses.
@@ -345,24 +346,24 @@ Ver [docs/AUTOMATIZACION.md](docs/AUTOMATIZACION.md) para información completa 
 
 ## Calidad de Datos
 
-### Problemas Conocidos
-- Banco Amazonas: No tiene datos (1 de 24 bancos faltante)
-- 11.7% de indicadores vacíos (448K registros sin cuenta)
-- 32.67% de valores nulos en INDICAD
-- Duplicados en PYG: 160K registros
-- Cobertura histórica variable (2003-2008: solo 17 bancos)
+**Nota**: El modulo de Calidad de Datos fue archivado y no esta activo en la UI.
+El codigo vive en `archived_pages/0_Calidad_old.py` para uso tecnico.
 
 ### Validaciones Implementadas
-- Filtro de cuentas vacías en carga
-- Deduplicación por banco+fecha+código
-- Métricas de calidad registradas
+- Filtro de cuentas vacias en carga
+- Deduplicacion por banco+fecha+codigo (cuando aplica)
+- Metricas de calidad registradas
 - Cache de datos con Streamlit
+
+### Nota de compatibilidad
+Algunas metricas historicas de INDICAD no aplican al pipeline actual,
+ya que el flujo vigente solo usa BAL, PYG y CAMEL.
 
 ## Funcionalidades Futuras
 
 ### Módulos en Planificación
 
-**0. Calidad de Datos**
+**0. Calidad de Datos (archivado)**
 - Dashboard de métricas de completitud
 - Heatmap de cobertura temporal por banco y período
 - Alertas de indicadores con >20% valores nulos

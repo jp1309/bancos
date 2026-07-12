@@ -32,15 +32,19 @@
 
 ## 📊 Estructura del Dashboard
 
-### Módulos Principales
+### M?dulos Principales (actual)
 
 ```
+Inicio.py                       # P?gina principal (entrypoint)
 pages/
-├── 0_Calidad.py             # Validación de calidad de datos
-├── 1_Panorama.py            # Vista general del sistema
-├── 2_Balance_General.py     # Análisis temporal de balance
-└── 3_Perdidas_Ganancias.py  # Rentabilidad y resultados (PYG)
+??? 1_Panorama.py            # Vista general del sistema
+??? 2_Balance_General.py     # An?lisis temporal de balance
+??? 3_P?rdidas_y_Ganancias.py # Resultados PYG (evoluci?n + ranking)
+??? 4_CAMEL.py               # Indicadores CAMEL
 ```
+
+**Nota**: El m?dulo de Calidad de Datos fue archivado y vive en
+`archived_pages/0_Calidad_old.py` para uso t?cnico interno.
 
 ### Utilidades
 

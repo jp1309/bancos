@@ -16,6 +16,7 @@ Estructura de la hoja PYG:
 
 import pandas as pd
 import numpy as np
+import re
 from pathlib import Path
 from datetime import datetime
 import sys
@@ -30,6 +31,15 @@ import config
 # Configuración
 CARPETA_DATOS = Path(config.get_carpeta_salida()) / "archivos_excel"
 CARPETA_SALIDA = Path("master_data")
+
+
+def extraer_nombre_banco(carpeta: str) -> str:
+    """Extrae nombre del banco de la carpeta, quitando el sufijo MES AÑO."""
+    nombre = re.sub(
+        r'\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{4}$',
+        '', carpeta, flags=re.IGNORECASE
+    )
+    return nombre.strip()
 
 # Códigos para cuentas resumen (filas con "--")
 CODIGOS_RESUMEN = {
@@ -66,7 +76,7 @@ def procesar_archivo_pyg(ruta_excel: Path) -> pd.DataFrame:
     """Procesa la hoja PYG de un archivo Excel."""
     try:
         # Extraer nombre del banco de la ruta
-        nombre_banco = ruta_excel.parent.name.split()[0]
+        nombre_banco = extraer_nombre_banco(ruta_excel.parent.name)
 
         # Leer hoja PYG sin encabezado
         df_raw = pd.read_excel(ruta_excel, sheet_name='PYG', header=None)
