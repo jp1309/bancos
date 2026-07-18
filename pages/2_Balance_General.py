@@ -107,7 +107,7 @@ def obtener_serie_banco(df: pd.DataFrame, banco: str, codigo: str) -> pd.DataFra
 def obtener_serie_sistema(df: pd.DataFrame, codigo: str) -> pd.DataFrame:
     """Obtiene serie temporal agregada del sistema."""
     df_filtrado = df[df['codigo'] == codigo].copy()
-    serie = df_filtrado.groupby('fecha')['valor'].sum().reset_index()
+    serie = df_filtrado.groupby('fecha', observed=True)['valor'].sum().reset_index()
     serie['valor_millones'] = serie['valor'] / 1000
     serie = serie.sort_values('fecha')
     return serie
@@ -143,7 +143,9 @@ def obtener_datos_heatmap_mensual(df_completo: pd.DataFrame, codigo: str, bancos
     df_filtrado = df_filtrado.sort_values(['banco', 'año', 'mes'])
 
     # Para cada banco y mes, calcular variación vs año anterior
-    df_filtrado['valor_ano_anterior'] = df_filtrado.groupby(['banco', 'mes'])['valor_millones'].shift(1)
+    df_filtrado['valor_ano_anterior'] = df_filtrado.groupby(
+        ['banco', 'mes'], observed=True
+    )['valor_millones'].shift(1)
     df_filtrado['crecimiento_yoy'] = ((df_filtrado['valor_millones'] / df_filtrado['valor_ano_anterior']) - 1) * 100
 
     # Filtrar por rango de fechas si se especifica
@@ -160,7 +162,8 @@ def obtener_datos_heatmap_mensual(df_completo: pd.DataFrame, codigo: str, bancos
         index='banco',
         columns='fecha_str',
         values='crecimiento_yoy',
-        aggfunc='first'
+        aggfunc='first',
+        observed=True,
     )
 
     # Ordenar bancos por valor del último período disponible (más grande arriba)
@@ -207,7 +210,7 @@ def obtener_valores_bancos_mes(df: pd.DataFrame, codigo: str, fecha: pd.Timestam
         return pd.DataFrame()
 
     # Agrupar por banco (en caso de duplicados, tomar el primer valor)
-    resultado = df_filtrado.groupby('banco', as_index=False).agg({
+    resultado = df_filtrado.groupby('banco', as_index=False, observed=True).agg({
         'valor_millones': 'first'
     })
 

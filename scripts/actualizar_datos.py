@@ -21,6 +21,7 @@ import sys
 import json
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -31,6 +32,7 @@ sys.path.insert(0, str(ROOT_DIR / "scripts"))
 
 # Importar configuración
 import config
+from validar_actualizacion import capturar_estado, validar_actualizacion
 
 # =============================================================================
 # CONFIGURACIÓN
@@ -100,7 +102,19 @@ def verificar_datos_ya_actualizados() -> bool:
     return False
 
 
-def ejecutar_script(script_name: str) -> bool:
+def verificar_publicacion_completa() -> bool:
+    """Comprueba los tres datasets, no solo la fecha maxima de Balance."""
+    try:
+        validar_actualizacion(bancos_esperados=config.NUMERO_ESPERADO_BANCOS)
+        log(f"La publicacion completa ya contiene {config.PERIODO_DESCARGA}")
+        return True
+    except Exception as exc:
+        primera_linea = str(exc).splitlines()[0]
+        log(f"La publicacion requiere actualizacion: {primera_linea}", "WARNING")
+        return False
+
+
+def ejecutar_script(script_name: str) -> int:
     """
     Ejecuta un script Python y retorna si fue exitoso.
 
@@ -108,7 +122,7 @@ def ejecutar_script(script_name: str) -> bool:
         script_name: Nombre del script a ejecutar
 
     Returns:
-        bool: True si el script se ejecutó correctamente
+        int: Codigo de salida del proceso
     """
     script_path = SCRIPTS_DIR / script_name
     log(f"Ejecutando: {script_name}")
@@ -124,24 +138,24 @@ def ejecutar_script(script_name: str) -> bool:
 
         if result.returncode == 0:
             log(f"[OK] {script_name} completado exitosamente")
-            return True
+            return 0
         else:
             log(f"[FAIL] {script_name} fallo con codigo {result.returncode}", "ERROR")
             if result.stdout:
                 log(f"  Salida: {result.stdout[-1000:]}", "ERROR")
             if result.stderr:
                 log(f"  Error: {result.stderr[-1000:]}", "ERROR")
-            return False
+            return result.returncode
 
     except subprocess.TimeoutExpired:
         log(f"[FAIL] {script_name} excedio el tiempo limite", "ERROR")
-        return False
+        return 1
     except Exception as e:
         log(f"[FAIL] Error ejecutando {script_name}: {e}", "ERROR")
-        return False
+        return 1
 
 
-def descargar_datos() -> bool:
+def descargar_datos() -> int:
     """
     Ejecuta el script de descarga.
 
@@ -161,7 +175,7 @@ def procesar_balance() -> bool:
     log("PASO 2: PROCESAMIENTO DE BALANCE")
     log("=" * 60)
 
-    return ejecutar_script("procesar_balance.py")
+    return ejecutar_script("procesar_balance.py") == 0
 
 
 def procesar_pyg() -> bool:
@@ -170,7 +184,7 @@ def procesar_pyg() -> bool:
     log("PASO 3: PROCESAMIENTO DE P&G")
     log("=" * 60)
 
-    return ejecutar_script("procesar_pyg.py")
+    return ejecutar_script("procesar_pyg.py") == 0
 
 
 def procesar_camel() -> bool:
@@ -179,7 +193,7 @@ def procesar_camel() -> bool:
     log("PASO 4: PROCESAMIENTO DE CAMEL")
     log("=" * 60)
 
-    return ejecutar_script("procesar_camel.py")
+    return ejecutar_script("procesar_camel.py") == 0
 
 
 def verificar_archivos_generados() -> bool:
@@ -224,6 +238,30 @@ def limpiar_datos_temporales():
             log(f"  Eliminada carpeta: {carpeta_descarga.name}")
         except Exception as e:
             log(f"  No se pudo eliminar {carpeta_descarga.name}: {e}", "WARNING")
+
+
+def respaldar_master(directorio_respaldo: Path) -> list[str]:
+    """Copia los artefactos publicados para poder revertir un ETL parcial."""
+    nombres = [
+        "balance.parquet", "pyg.parquet", "camel.parquet",
+        "metadata.json", "update_status.json",
+    ]
+    respaldados = []
+    for nombre in nombres:
+        origen = MASTER_DATA_DIR / nombre
+        if origen.exists():
+            shutil.copy2(origen, directorio_respaldo / nombre)
+            respaldados.append(nombre)
+    return respaldados
+
+
+def restaurar_master(directorio_respaldo: Path, respaldados: list[str]):
+    """Restaura el estado publicado si cualquier etapa o validacion falla."""
+    log("Restaurando master_data tras un fallo del ETL...", "WARNING")
+    for nombre in respaldados:
+        respaldo = directorio_respaldo / nombre
+        if respaldo.exists():
+            shutil.copy2(respaldo, MASTER_DATA_DIR / nombre)
 
 
 def generar_reporte(exitoso: bool, pasos_completados: list):
@@ -274,74 +312,73 @@ def generar_reporte(exitoso: bool, pasos_completados: list):
     return estado
 
 
-def main():
-    """Función principal de actualización."""
+def main() -> int:
+    """Ejecuta una actualizacion transaccional y devuelve un codigo semantico."""
     log("=" * 60)
-    log("INICIANDO ACTUALIZACIÓN AUTOMÁTICA DE DATOS")
+    log("INICIANDO ACTUALIZACION AUTOMATICA DE DATOS")
     log("=" * 60)
-
-    # Mostrar configuración
     config.mostrar_configuracion()
 
-    # Verificar si ya está actualizado
-    if verificar_datos_ya_actualizados():
+    if verificar_publicacion_completa():
         log("No es necesario actualizar. Saliendo.")
-        return True
+        return 0
 
     pasos_completados = []
-    exitoso = True
+    estado_anterior = capturar_estado()
+    codigo_descarga = descargar_datos()
 
-    # Paso 1: Descargar
-    if descargar_datos():
-        pasos_completados.append("descarga")
-    else:
-        log("La descarga falló. Verificando si es porque no hay datos disponibles aún...", "WARNING")
-        # Guardar estado de intento fallido (para reintentar mañana)
+    if codigo_descarga == 2:
+        log("La fuente todavia no contiene el mes objetivo. Sin cambios.")
         estado = cargar_estado()
         estado['ultimo_intento'] = datetime.now().isoformat()
         estado['ultimo_intento_periodo'] = config.PERIODO_DESCARGA
-        estado['ultimo_intento_exitoso'] = False
+        estado['ultimo_intento_exitoso'] = True
+        estado['sin_datos_nuevos'] = True
         guardar_estado(estado)
-        return False
+        return 2
+    if codigo_descarga != 0:
+        log("La descarga o validacion de la fuente fallo.", "ERROR")
+        return 1
+    pasos_completados.append("descarga")
 
-    # Paso 2: Procesar Balance
-    if procesar_balance():
-        pasos_completados.append("balance")
-    else:
-        exitoso = False
+    with tempfile.TemporaryDirectory(prefix="bancos-master-backup-") as temporal:
+        directorio_respaldo = Path(temporal)
+        respaldados = respaldar_master(directorio_respaldo)
+        try:
+            if not procesar_balance():
+                raise RuntimeError("Fallo el procesamiento de Balance")
+            pasos_completados.append("balance")
 
-    # Paso 3: Procesar PyG
-    if procesar_pyg():
-        pasos_completados.append("pyg")
-    else:
-        exitoso = False
+            if not procesar_pyg():
+                raise RuntimeError("Fallo el procesamiento de PyG")
+            pasos_completados.append("pyg")
 
-    # Paso 4: Procesar CAMEL
-    if procesar_camel():
-        pasos_completados.append("camel")
-    else:
-        exitoso = False
+            if not procesar_camel():
+                raise RuntimeError("Fallo el procesamiento CAMEL")
+            pasos_completados.append("camel")
 
-    # Paso 5: Verificar archivos
-    if verificar_archivos_generados():
-        pasos_completados.append("verificacion")
-    else:
-        exitoso = False
+            if not verificar_archivos_generados():
+                raise RuntimeError("Faltan artefactos del ETL")
 
-    # Limpiar temporales solo si fue exitoso
-    if exitoso:
-        limpiar_datos_temporales()
+            validar_actualizacion(
+                estado_anterior=estado_anterior,
+                bancos_esperados=config.NUMERO_ESPERADO_BANCOS,
+            )
+            pasos_completados.append("verificacion")
+            generar_reporte(True, pasos_completados)
+        except Exception as exc:
+            log(str(exc), "ERROR")
+            restaurar_master(directorio_respaldo, respaldados)
+            generar_reporte(False, pasos_completados)
+            return 1
 
-    # Generar reporte
-    generar_reporte(exitoso, pasos_completados)
-
-    return exitoso
+    limpiar_datos_temporales()
+    return 0
 
 
 if __name__ == "__main__":
     try:
-        exito = main()
-        sys.exit(0 if exito else 1)
+        sys.exit(main())
     except KeyboardInterrupt:
         log("Actualización cancelada por el usuario", "WARNING")
         sys.exit(1)

@@ -13,6 +13,25 @@ import json
 MASTER_DATA_DIR = Path(__file__).parent.parent / "master_data"
 
 
+def _categorizar_columnas(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
+    """Reduce memoria de columnas textuales repetitivas sin copiar todo el DataFrame."""
+    for columna in columnas:
+        if columna in df.columns and not isinstance(df[columna].dtype, pd.CategoricalDtype):
+            df[columna] = df[columna].astype('category')
+    return df
+
+
+def _mascara_texto_valido(serie: pd.Series) -> pd.Series:
+    """Filtra texto vacio de forma eficiente incluso si la serie es categorica."""
+    if isinstance(serie.dtype, pd.CategoricalDtype):
+        categorias_invalidas = [
+            valor for valor in serie.cat.categories
+            if not str(valor).strip()
+        ]
+        return serie.notna() & ~serie.isin(categorias_invalidas)
+    return serie.notna() & serie.str.strip().ne('')
+
+
 @st.cache_data(ttl=3600)
 def cargar_balance() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
@@ -26,15 +45,14 @@ def cargar_balance() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     if not filepath.exists():
         raise FileNotFoundError(f"No se encontro {filepath}")
 
-    df_original = pd.read_parquet(filepath)
-    registros_originales = len(df_original)
-
-    # Limpieza
-    df = df_original.copy()
+    df = pd.read_parquet(filepath)
+    registros_originales = len(df)
+    df = _categorizar_columnas(df, ['banco', 'codigo', 'cuenta'])
 
     # 1. Filtrar cuentas vacias
-    mask_cuenta_valida = df['cuenta'].fillna('').str.strip() != ''
-    df = df[mask_cuenta_valida]
+    mask_cuenta_valida = _mascara_texto_valido(df['cuenta'])
+    if not mask_cuenta_valida.all():
+        df = df.loc[mask_cuenta_valida]
 
     # 2. Filtrar valores nulos en columnas clave
     df = df.dropna(subset=['banco', 'fecha'])
@@ -91,14 +109,14 @@ def cargar_pyg() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     if not filepath.exists():
         raise FileNotFoundError(f"No se encontro {filepath}")
 
-    df_original = pd.read_parquet(filepath)
-    registros_originales = len(df_original)
-
-    df = df_original.copy()
+    df = pd.read_parquet(filepath)
+    registros_originales = len(df)
+    df = _categorizar_columnas(df, ['banco', 'codigo', 'cuenta'])
 
     # Filtrar cuentas vacias
-    mask_cuenta_valida = df['cuenta'].fillna('').str.strip() != ''
-    df = df[mask_cuenta_valida]
+    mask_cuenta_valida = _mascara_texto_valido(df['cuenta'])
+    if not mask_cuenta_valida.all():
+        df = df.loc[mask_cuenta_valida]
 
     # Filtrar valores nulos en columnas clave
     df = df.dropna(subset=['banco', 'fecha'])
@@ -146,14 +164,14 @@ def cargar_camel() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     if not filepath.exists():
         raise FileNotFoundError(f"No se encontro {filepath}")
 
-    df_original = pd.read_parquet(filepath)
-    registros_originales = len(df_original)
-
-    df = df_original.copy()
+    df = pd.read_parquet(filepath)
+    registros_originales = len(df)
+    df = _categorizar_columnas(df, ['banco', 'codigo', 'indicador', 'categoria'])
 
     # Filtrar indicadores vacios
-    mask_indicador_valido = df['indicador'].fillna('').str.strip() != ''
-    df = df[mask_indicador_valido]
+    mask_indicador_valido = _mascara_texto_valido(df['indicador'])
+    if not mask_indicador_valido.all():
+        df = df.loc[mask_indicador_valido]
 
     # Filtrar valores nulos en columnas clave
     df = df.dropna(subset=['banco', 'fecha'])

@@ -24,6 +24,10 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+if sys.platform == 'win32' and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # Agregar directorio de scripts al path para importar config
 sys.path.insert(0, str(Path(__file__).parent))
 import config
@@ -178,7 +182,9 @@ def desacumular_valores(df: pd.DataFrame) -> pd.DataFrame:
     df['mes'] = df['fecha'].dt.month
 
     # Calcular valor del mes anterior (dentro del mismo banco, código y año)
-    df['valor_anterior'] = df.groupby(['banco', 'codigo', 'ano'])['valor_acumulado'].shift(1)
+    df['valor_anterior'] = df.groupby(
+        ['banco', 'codigo', 'ano'], observed=True
+    )['valor_acumulado'].shift(1)
 
     # Desacumular: para enero (mes=1) o si no hay anterior, usar valor acumulado directamente
     # Para otros meses, restar el valor anterior
@@ -202,7 +208,9 @@ def calcular_suma_movil_12m(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values(['banco', 'codigo', 'fecha']).copy()
 
     # Calcular suma móvil de 12 meses
-    df['valor_12m'] = df.groupby(['banco', 'codigo'])['valor_mes'].transform(
+    df['valor_12m'] = df.groupby(
+        ['banco', 'codigo'], observed=True
+    )['valor_mes'].transform(
         lambda x: x.rolling(window=12, min_periods=12).sum()
     )
 
@@ -222,11 +230,11 @@ def main():
     print(f"\nArchivos encontrados: {len(archivos)}")
 
     if len(archivos) == 0:
-        print("[ERROR] No se encontraron archivos Excel")
-        return
+        raise RuntimeError("No se encontraron archivos Excel para PyG")
 
     # Procesar cada archivo
     dataframes = []
+    archivos_error = []
 
     for i, archivo in enumerate(archivos):
         print(f"\n[{i+1}/{len(archivos)}] {archivo.parent.name}")
@@ -234,10 +242,16 @@ def main():
         if not df.empty:
             dataframes.append(df)
             print(f"  -> {len(df):,} registros")
+        else:
+            archivos_error.append(archivo.parent.name)
 
     if len(dataframes) == 0:
-        print("\n[ERROR] No se procesaron datos")
-        return
+        raise RuntimeError("No se procesaron datos de PyG")
+
+    if archivos_error:
+        raise RuntimeError(
+            f"PyG incompleto; archivos con error: {', '.join(archivos_error)}"
+        )
 
     # Combinar todos los DataFrames
     print("\n" + "-" * 40)
@@ -258,6 +272,8 @@ def main():
     columnas_finales = ['banco', 'fecha', 'codigo', 'cuenta',
                         'valor_acumulado', 'valor_mes', 'valor_12m']
     df_final = df_final[columnas_finales]
+    for columna in ['banco', 'codigo', 'cuenta']:
+        df_final[columna] = df_final[columna].astype('category')
 
     # Estadísticas
     print("\n" + "=" * 40)
@@ -277,7 +293,9 @@ def main():
 
     # Guardar
     ruta_salida = CARPETA_SALIDA / "pyg.parquet"
-    df_final.to_parquet(ruta_salida, index=False)
+    ruta_temporal = ruta_salida.with_suffix(".parquet.tmp")
+    df_final.to_parquet(ruta_temporal, index=False)
+    ruta_temporal.replace(ruta_salida)
     print(f"\n[OK] Guardado: {ruta_salida}")
     print(f"    Tamaño: {ruta_salida.stat().st_size / 1024 / 1024:.1f} MB")
 

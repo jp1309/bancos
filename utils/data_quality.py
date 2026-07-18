@@ -64,7 +64,9 @@ def validar_cobertura_bancos(df: pd.DataFrame) -> pd.DataFrame:
     df_temp['año'] = df_temp['fecha'].dt.year
 
     # Contar registros por banco y año
-    cobertura = df_temp.groupby(['banco', 'año']).size().unstack(fill_value=0)
+    cobertura = df_temp.groupby(
+        ['banco', 'año'], observed=True
+    ).size().unstack(fill_value=0)
 
     # Convertir a binario (tiene datos o no)
     cobertura_binaria = (cobertura > 0).astype(int)
@@ -79,7 +81,7 @@ def calcular_cobertura_por_fecha(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame con fecha y conteo de bancos
     """
-    cobertura = df.groupby('fecha')['banco'].nunique().reset_index()
+    cobertura = df.groupby('fecha', observed=True)['banco'].nunique().reset_index()
     cobertura.columns = ['fecha', 'bancos_con_datos']
     cobertura = cobertura.sort_values('fecha')
 
@@ -144,7 +146,7 @@ def analizar_nulos_por_indicador(df: pd.DataFrame, top_n: int = 20) -> pd.DataFr
     Returns:
         DataFrame con indicador, nulos y porcentaje
     """
-    nulos_por_cuenta = df.groupby('cuenta').agg({
+    nulos_por_cuenta = df.groupby('cuenta', observed=True).agg({
         'valor': [
             ('total', 'count'),
             ('nulos', lambda x: x.isna().sum()),

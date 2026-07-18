@@ -1,6 +1,7 @@
 {
-  "ultima_actualizacion": "2026-07-08T15:16:57.360523",
+  "ultima_actualizacion": "2026-07-18T12:27:00.044622",
   "bancos_procesados": [
+    "Amazonas",
     "Atlantida",
     "Austro",
     "Bolivariano",
@@ -14,14 +15,13 @@
     "General Rumiñahui",
     "Guayaquil",
     "Internacional",
+    "Litoral",
     "Loja",
     "Machala",
     "Pacifico",
     "Pichincha",
     "Procredit",
     "Produbanco",
-    "Series BancoAmazonas",
-    "Series BancoLitoral",
     "Solidario",
     "VisionFund"
   ],

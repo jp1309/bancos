@@ -14,10 +14,14 @@ CONFIGURACIÓN:
 import sys
 import os
 import re
+import calendar
+from datetime import datetime
+from pathlib import Path
 
 # Importar configuración
 try:
     import config
+    from fuente_bancos import validar_directorio_fuentes, validar_zip
 except ImportError:
     print("ERROR: No se encontró el archivo config.py")
     print("Asegúrate de estar en la carpeta correcta del proyecto")
@@ -80,8 +84,12 @@ def main():
     chrome_options.add_argument("--window-size=1920,1080")
 
     # Crear carpeta de salida
-    download_dir = os.path.join(os.getcwd(), config.get_carpeta_salida())
-    os.makedirs(download_dir, exist_ok=True)
+    carpeta_final = Path(os.getcwd()) / config.get_carpeta_salida()
+    carpeta_temporal = carpeta_final.with_name(f"{carpeta_final.name}.tmp")
+    if carpeta_temporal.exists():
+        shutil.rmtree(carpeta_temporal)
+    carpeta_temporal.mkdir(parents=True)
+    download_dir = str(carpeta_temporal)
 
     print(f"\nIniciando navegador Chrome...")
     service = Service(ChromeDriverManager().install())
@@ -270,7 +278,7 @@ def main():
             print("  1. Que la carpeta del año sea correcta en config.py")
             print("  2. Que los archivos estén disponibles en el portal")
             print("  3. La documentación en INSTRUCCIONES_DESCARGA.md")
-            return
+            raise RuntimeError("No se encontraron archivos de descarga")
 
         # Listar archivos
         for idx, f in enumerate(archivos_encontrados, 1):
@@ -278,9 +286,9 @@ def main():
 
         # Verificar número esperado
         if len(archivos_encontrados) != config.NUMERO_ESPERADO_BANCOS:
-            print(f"\n⚠️  ADVERTENCIA: Se esperaban {config.NUMERO_ESPERADO_BANCOS} bancos,")
+            print(f"\n[ERROR] Se esperaban {config.NUMERO_ESPERADO_BANCOS} bancos,")
             print(f"    pero se encontraron {len(archivos_encontrados)}")
-            print("    Esto puede ser normal si hubo fusiones/cierres de bancos.")
+            raise RuntimeError("Cobertura incompleta de entidades en el portal")
 
         # Descargar
         print(f"\n{'='*80}")
@@ -297,6 +305,7 @@ def main():
         fallidos = 0
 
         for idx, archivo in enumerate(archivos_encontrados, 1):
+            filepath_temporal = None
             try:
                 nombre_corto = archivo['nombre'][:45]
                 print(f"[{idx:3}/{len(archivos_encontrados)}] {nombre_corto:45} ... ", end='', flush=True)
@@ -309,11 +318,15 @@ def main():
                     filename += '.zip'
 
                 filepath = os.path.join(download_dir, filename)
+                filepath_temporal = f"{filepath}.part"
 
-                with open(filepath, 'wb') as f:
+                with open(filepath_temporal, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=config.CHUNK_SIZE):
                         if chunk:
                             f.write(chunk)
+
+                validar_zip(Path(filepath_temporal))
+                os.replace(filepath_temporal, filepath)
 
                 size_mb = os.path.getsize(filepath) / (1024 * 1024)
                 print(f"✓ ({size_mb:5.2f} MB)")
@@ -321,6 +334,8 @@ def main():
 
             except Exception as e:
                 print(f"✗ {str(e)[:30]}")
+                if filepath_temporal and os.path.exists(filepath_temporal):
+                    os.remove(filepath_temporal)
                 fallidos += 1
 
         print(f"\n{'='*80}")
@@ -336,7 +351,7 @@ def main():
         if exitosos == len(archivos_encontrados):
             print("\n✓ TODOS LOS ARCHIVOS SE DESCARGARON CORRECTAMENTE")
         else:
-            print(f"\n⚠️  {fallidos} archivo(s) fallaron. Revisa los errores arriba.")
+            raise RuntimeError(f"{fallidos} archivo(s) fallaron durante la descarga")
 
         # NUEVO: Descomprimir archivos ZIP
         if exitosos > 0:
@@ -356,6 +371,7 @@ def main():
             for idx, zip_filename in enumerate(archivos_zip, 1):
                 try:
                     zip_path = os.path.join(download_dir, zip_filename)
+                    validar_zip(Path(zip_path))
                     banco_name = re.sub(r'^Series\s*Banco\s*', '', zip_filename.replace('.zip', ''), flags=re.IGNORECASE)
 
                     print(f"[{idx:3}/{len(archivos_zip)}] {banco_name[:45]:45} ... ", end='', flush=True)
@@ -420,7 +436,46 @@ def main():
             if descomprimidos == len(archivos_zip):
                 print("✓ TODOS LOS ARCHIVOS SE DESCOMPRIMIERON CORRECTAMENTE\n")
             else:
-                print(f"⚠️  {errores_zip} archivo(s) fallaron al descomprimir.\n")
+                raise RuntimeError(f"{errores_zip} archivo(s) fallaron al descomprimir")
+
+            fecha_esperada = datetime(
+                config.ANO_OBJETIVO,
+                config.MES_OBJETIVO,
+                calendar.monthrange(config.ANO_OBJETIVO, config.MES_OBJETIVO)[1],
+            )
+            inspecciones = validar_directorio_fuentes(
+                Path(extracted_dir),
+                fecha_esperada=fecha_esperada,
+                bancos_esperados=config.NUMERO_ESPERADO_BANCOS,
+            )
+            fecha_fuente = inspecciones[0].fecha_corte
+            print(f"Fecha de corte validada: {fecha_fuente:%Y-%m-%d}")
+
+            if fecha_fuente < fecha_esperada:
+                print(
+                    f"La fuente todavia llega a {fecha_fuente:%Y-%m-%d}; "
+                    f"se esperaba {fecha_esperada:%Y-%m-%d}. Sin datos nuevos."
+                )
+                shutil.rmtree(carpeta_temporal, ignore_errors=True)
+                sys.exit(2)
+
+            sufijo_respaldo = datetime.now().strftime("%Y%m%d%H%M%S")
+            carpeta_respaldo = carpeta_final.with_name(
+                f"{carpeta_final.name}.bak-{sufijo_respaldo}-{os.getpid()}"
+            )
+            if carpeta_final.exists():
+                carpeta_final.replace(carpeta_respaldo)
+            try:
+                carpeta_temporal.replace(carpeta_final)
+            except Exception:
+                if carpeta_respaldo.exists() and not carpeta_final.exists():
+                    carpeta_respaldo.replace(carpeta_final)
+                raise
+            if carpeta_respaldo.exists():
+                # OneDrive puede mantener reparse points bloqueados unos segundos.
+                # La fuente nueva ya esta activa, por lo que esta limpieza es best-effort.
+                shutil.rmtree(carpeta_respaldo, ignore_errors=True)
+            print(f"Fuente validada y publicada localmente en: {carpeta_final}")
 
     except KeyboardInterrupt:
         print("\n\nDescarga cancelada por el usuario.")
@@ -430,6 +485,7 @@ def main():
         print(f"\n[ERROR] {e}")
         import traceback
         traceback.print_exc()
+        shutil.rmtree(carpeta_temporal, ignore_errors=True)
         sys.exit(1)
 
     finally:

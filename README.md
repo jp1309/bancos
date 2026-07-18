@@ -13,9 +13,9 @@ El dashboard cuenta con 4 módulos principales que permiten analizar diferentes 
 ## Fuente de Datos
 
 - **Origen**: Superintendencia de Bancos del Ecuador - Catálogo Único de Cuentas
-- **Período cubierto**: 2003-2025 (276 meses)
+- **Período cubierto**: enero 2003-junio 2026 (282 meses)
 - **Instituciones**: 23-24 bancos (segun disponibilidad en el periodo)
-- **Registros**: ~15.9 millones de filas (solo BAL, PYG, CAMEL)
+- **Registros**: ~9.1 millones de filas (BAL, PYG y CAMEL)
 - **Formato**: Archivos Parquet optimizados
 
 ### Estructura de Datos
@@ -303,15 +303,16 @@ El sistema incluye un proceso automatizado que actualiza los datos mensualmente 
 
 ### Funcionamiento
 
-- **Cuándo:** Del día 10 al 15 de cada mes a las 8:00 AM (hora Ecuador)
+- **Cuándo:** Días 6, 8, 10, 12, 14, 16, 18 y 20 a las 8:00 AM (hora Ecuador)
 - **Qué hace:** Descarga los datos del mes anterior desde la Superintendencia de Bancos
 - **Proceso:**
   1. Descarga archivos ZIP de cada banco
   2. Extrae y procesa hojas Excel (Balance, PyG)
   3. Calcula indicadores CAMEL
   4. Genera archivos `.parquet` optimizados
-  5. Hace commit automático a GitHub
-  6. Streamlit Cloud se actualiza automáticamente
+  5. Valida fecha, cobertura de 23 bancos, claves e integridad histórica
+  6. Hace commit automático a GitHub solo si la fuente avanzó
+  7. Streamlit Cloud se actualiza automáticamente
 
 ### Archivos del Sistema de Automatización
 

@@ -108,7 +108,7 @@ def obtener_serie_temporal(df: pd.DataFrame, codigo: str) -> pd.DataFrame:
     """Obtiene serie temporal agregada del sistema para una cuenta."""
     df_cuenta = df[(df['codigo'] == codigo)]
 
-    serie = df_cuenta.groupby('fecha')['valor'].sum().reset_index()
+    serie = df_cuenta.groupby('fecha', observed=True)['valor'].sum().reset_index()
     serie['valor_millones'] = serie['valor'] / 1000
     serie = serie.sort_values('fecha')
 

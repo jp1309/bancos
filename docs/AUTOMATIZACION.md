@@ -96,10 +96,12 @@ Orquesta todo el proceso:
 | Script | Función |
 |--------|---------|
 | `scripts/descargar.py` | Descarga los archivos ZIP de la Superintendencia usando Selenium |
+| `scripts/fuente_bancos.py` | Valida ZIP, hojas y fecha interna de las 23 entidades |
 | `scripts/descomprimir_zips.py` | Descomprime los archivos ZIP descargados |
 | `scripts/procesar_balance.py` | Procesa la hoja BAL (Balance General) → `balance.parquet` |
 | `scripts/procesar_pyg.py` | Procesa la hoja PYG (Pérdidas y Ganancias) → `pyg.parquet` |
 | `scripts/procesar_camel.py` | Calcula indicadores CAMEL → `camel.parquet` |
+| `scripts/validar_actualizacion.py` | Puerta de calidad antes del commit y despliegue |
 
 ## Archivos de Datos
 
@@ -126,13 +128,16 @@ Diciembre → El día 10 se descargan datos de Noviembre
 ## Manejo de Errores
 
 ### Si los datos no están disponibles el día 6:
-- El workflow descarga el ZIP disponible, procesa, y verifica la `fecha_max` real del parquet
-- Si el parquet no avanzó al mes esperado, guarda el período real (no el objetivo) en `update_status.json`
+- El workflow descarga a una carpeta temporal y valida los 23 ZIP y Excel
+- Comprueba que BAL, PYG y CAMEL tengan una fecha de corte uniforme
+- Si la fuente no avanzó, termina con código 2: no ejecuta ETL, no hace commit y no reinicia Streamlit
 - Se vuelve a ejecutar automáticamente cada 2 días (8, 10, 12... hasta el 20)
-- Cada reintento verifica la `fecha_max` real del parquet antes de decidir si hay que descargar
+- Cada reintento valida el estado real de los tres Parquet, no solo `update_status.json`
 
 ### Si el procesamiento falla:
-- El estado queda como "fallido" en `update_status.json`
+- Los procesadores terminan con error si falta una entidad o una hoja no puede procesarse
+- El orquestador restaura los tres Parquet desde un respaldo temporal
+- La puerta de calidad impide publicar pérdida de meses, bancos rezagados o claves duplicadas
 - Se puede revisar el log en GitHub Actions
 - Se puede ejecutar manualmente una vez corregido el problema
 

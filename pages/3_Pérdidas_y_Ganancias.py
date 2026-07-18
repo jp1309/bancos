@@ -217,7 +217,7 @@ def main():
                             (df_pyg['codigo'] == codigo_cuenta) &
                             (df_pyg['fecha'] >= fecha_inicio_sel) &
                             (df_pyg['fecha'] <= fecha_fin_sel)
-                        ].groupby('fecha')['valor_12m'].sum().reset_index()
+                        ].groupby('fecha', observed=True)['valor_12m'].sum().reset_index()
                         df_banco = df_banco.merge(df_total, on='fecha', suffixes=('', '_total'))
                         y_data = (df_banco['valor_12m'] / df_banco['valor_12m_total'] * 100)
                         y_label = "Participacion (%)"
@@ -241,7 +241,7 @@ def main():
                     (df_pyg['codigo'] == codigo_cuenta) &
                     (df_pyg['fecha'] >= fecha_inicio_sel) &
                     (df_pyg['fecha'] <= fecha_fin_sel)
-                ].groupby('fecha')['valor_12m'].sum().reset_index()
+                ].groupby('fecha', observed=True)['valor_12m'].sum().reset_index()
                 df_sistema['valor_millones'] = df_sistema['valor_12m'] / 1000
 
                 fig_evol.add_trace(go.Scatter(
