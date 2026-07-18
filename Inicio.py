@@ -10,10 +10,10 @@ Ejecutar con: streamlit run Inicio.py
 """
 
 import streamlit as st
-import pandas as pd
-from datetime import datetime
 import json
 from pathlib import Path
+
+from dashboard_metadata import resumir_metadata
 
 # =============================================================================
 # CONFIGURACION DE PAGINA (debe ser lo primero)
@@ -30,8 +30,8 @@ st.set_page_config(
         Plataforma de análisis del sistema bancario ecuatoriano.
 
         **Fuente de datos:** Superintendencia de Bancos del Ecuador
-        **Periodo:** 2003 - 2025 (23 años de historia)
-        **Bancos:** 24 instituciones financieras
+        **Periodo:** desde 2003, con actualización mensual
+        **Bancos:** cobertura validada en cada actualización
         """
     },
     # Nombre personalizado para la página principal en el sidebar
@@ -184,12 +184,12 @@ st.markdown("""
 # PAGINA PRINCIPAL (Home)
 # =============================================================================
 
-def render_header():
+def render_header(resumen):
     """Renderiza el encabezado principal."""
-    st.markdown("""
+    st.markdown(f"""
         <div class="main-header">
             <h1>📊 Sistema de Inteligencia Financiera</h1>
-            <p>Análisis Avanzado de la Banca Ecuatoriana | 23 años de datos históricos (2003-2025)</p>
+            <p>Análisis Avanzado de la Banca Ecuatoriana | {resumen['anos']} años de datos históricos</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -204,54 +204,48 @@ def obtener_metadata():
 
 
 def main():
-    render_header()
-
     # Información de actualización
     metadata = obtener_metadata()
+    resumen = resumir_metadata(metadata)
+    render_header(resumen)
+
+    if not resumen["completa"]:
+        st.warning("No se pudo leer completamente la metadata de publicación.")
 
     # KPIs principales en la parte superior
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="info-box">
             <h4>BANCOS ANALIZADOS</h4>
-            <p>24</p>
+            <p>{resumen['bancos']}</p>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("""
+        st.markdown(f"""
         <div class="info-box">
             <h4>AÑOS DE HISTORIA</h4>
-            <p>23</p>
+            <p>{resumen['anos']}</p>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
-        st.markdown("""
+        st.markdown(f"""
         <div class="info-box">
             <h4>MESES DE DATOS</h4>
-            <p>276</p>
+            <p>{resumen['meses']}</p>
         </div>
         """, unsafe_allow_html=True)
 
     with col4:
-        if metadata and 'fecha_actualizacion' in metadata:
-            fecha_act = metadata['fecha_actualizacion']
-            st.markdown(f"""
-            <div class="info-box">
-                <h4>ÚLTIMA ACTUALIZACIÓN</h4>
-                <p>{fecha_act}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="info-box">
-                <h4>DATOS AL</h4>
-                <p>Dic 2025</p>
-            </div>
-            """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="info-box">
+            <h4>DATOS AL</h4>
+            <p>{resumen['datos_al']}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -467,13 +461,13 @@ def main():
     st.markdown("---")
 
     # Info de datos
-    st.markdown("""
+    st.markdown(f"""
     ### 📚 Información del Sistema
 
     **Fuente de Datos:** Superintendencia de Bancos del Ecuador - Catálogo Único de Cuentas
-    **Período Cubierto:** Enero 2003 - Enero 2026 (277 meses)
-    **Instituciones:** 23 bancos activos del sistema privado
-    **Formato:** Archivos Parquet optimizados (~8 millones de registros)
+    **Período Cubierto:** {resumen['periodo']} ({resumen['meses']} meses)
+    **Instituciones:** {resumen['bancos']} bancos activos del sistema privado
+    **Formato:** Archivos Parquet optimizados ({resumen['registros']} de registros de balance)
 
     Los datos son actualizados mensualmente y procesados con validaciones de calidad
     para garantizar consultas rápidas y eficientes.
