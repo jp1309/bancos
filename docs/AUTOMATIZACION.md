@@ -1,302 +1,170 @@
-# Automatización de Actualización de Datos
+# Automatización mensual de datos
 
-Este documento describe el sistema de actualización automática de datos del Radar Bancario Ecuador.
+## Objetivo
 
-## Resumen
+Publicar un nuevo corte mensual solo cuando los 23 boletines por entidad contienen internamente el mes objetivo y los tres datasets resultantes superan la puerta de calidad.
 
-El sistema descarga automáticamente los datos de la Superintendencia de Bancos del Ecuador cada mes, los procesa y actualiza el dashboard en Streamlit Cloud.
+La automatización está definida en `.github/workflows/actualizar-datos.yml` y opera sobre la rama `main`.
 
-## Flujo de Actualización
+## Calendario
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    PROCESO AUTOMÁTICO MENSUAL                    │
-└─────────────────────────────────────────────────────────────────┘
+GitHub Actions intenta la actualización los días 6, 8, 10, 12, 14, 16, 18 y 20 de cada mes a las 13:00 UTC (08:00 de Ecuador continental, UTC-5).
 
-        Día 10 del mes (8:00 AM hora Ecuador)
-                         │
-                         ▼
-              ┌─────────────────────┐
-              │ GitHub Actions      │
-              │ inicia workflow     │
-              └──────────┬──────────┘
-                         │
-                         ▼
-              ┌─────────────────────┐
-              │ ¿Ya están los datos │
-              │ del mes anterior?   │
-              └──────────┬──────────┘
-                         │
-            ┌────────────┴────────────┐
-            │                         │
-            ▼ NO                      ▼ SÍ
-   ┌─────────────────┐       ┌─────────────────┐
-   │ Descargar datos │       │ Fin (no hacer   │
-   │ de la SBS       │       │ nada)           │
-   └────────┬────────┘       └─────────────────┘
-            │
-            ▼
-   ┌─────────────────┐
-   │ Procesar datos: │
-   │ • Balance       │
-   │ • PyG           │
-   │ • CAMEL         │
-   └────────┬────────┘
-            │
-            ▼
-   ┌─────────────────┐
-   │ Guardar archivos│
-   │ .parquet        │
-   └────────┬────────┘
-            │
-            ▼
-   ┌─────────────────┐
-   │ Commit y push   │
-   │ automático      │
-   └────────┬────────┘
-            │
-            ▼
-   ┌─────────────────┐
-   │ Streamlit Cloud │
-   │ detecta cambios │
-   │ y actualiza     │
-   └─────────────────┘
+El período objetivo se calcula en tiempo de ejecución como el mes calendario anterior. En enero, el cálculo cambia automáticamente al diciembre del año anterior.
+
+Los reintentos existen porque la publicación oficial no ocurre siempre el mismo día. Un intento sin avance es un no-op normal, no un incidente.
+
+## Flujo del workflow
+
+```text
+schedule / workflow_dispatch
+        │
+        ▼
+checkout main + Python 3.11 + Chrome + dependencias
+        │
+        ▼
+validar los tres Parquet contra el mes objetivo
+        │
+        ├── completos ─► resumen y fin
+        │
+        ▼
+scripts/actualizar_datos.py
+        │
+        ├── código 2 ─► fuente sin avance, fin sin commit
+        ├── error ────► job fallido, datos anteriores preservados
+        ▼
+validar_actualizacion.py
+        │
+        ▼
+commit de cinco artefactos + push a main
+        │
+        ▼
+Streamlit detecta el commit y redespliega
 ```
 
-## Archivos del Sistema
+## Artefactos publicados como una unidad
 
-### 1. Workflow de GitHub Actions
-**Archivo:** `.github/workflows/actualizar-datos.yml`
-
-- **Cuándo se ejecuta:** Días 6, 8, 10, 12, 14, 16, 18 y 20 de cada mes a las 8:00 AM (hora Ecuador)
-- **Por qué desde el día 6:** La SBS a veces publica antes del día 10. El script detecta si los datos son realmente nuevos comparando contra la `fecha_max` del parquet.
-- **Ejecución manual:** También se puede ejecutar manualmente desde GitHub Actions
-
-### 2. Configuración
-**Archivo:** `scripts/config.py`
-
-Configura automáticamente:
-- El periodo a descargar (mes anterior)
-- La URL del portal de la Superintendencia
-- Modo headless de Chrome (sin ventana visible)
-- Tiempos de espera para scraping
-
-### 3. Script Maestro
-**Archivo:** `scripts/actualizar_datos.py`
-
-Orquesta todo el proceso:
-1. Verifica si ya se descargaron los datos del mes
-2. Ejecuta `descargar.py` para obtener los datos
-3. Ejecuta `procesar_balance.py`, `procesar_pyg.py`, `procesar_camel.py`
-4. Verifica que los archivos se generaron correctamente
-5. Guarda el estado de la actualización
-
-### 4. Scripts de Descarga y Procesamiento
-
-| Script | Función |
-|--------|---------|
-| `scripts/descargar.py` | Descarga los archivos ZIP de la Superintendencia usando Selenium |
-| `scripts/fuente_bancos.py` | Valida ZIP, hojas y fecha interna de las 23 entidades |
-| `scripts/descomprimir_zips.py` | Descomprime los archivos ZIP descargados |
-| `scripts/procesar_balance.py` | Procesa la hoja BAL (Balance General) → `balance.parquet` |
-| `scripts/procesar_pyg.py` | Procesa la hoja PYG (Pérdidas y Ganancias) → `pyg.parquet` |
-| `scripts/procesar_camel.py` | Calcula indicadores CAMEL → `camel.parquet` |
-| `scripts/validar_actualizacion.py` | Puerta de calidad antes del commit y despliegue |
-
-## Archivos de Datos
-
-Los datos procesados se almacenan en la carpeta `master_data/`:
-
-| Archivo | Descripción | Tamaño aprox. |
-|---------|-------------|---------------|
-| `balance.parquet` | Balance General de todos los bancos (2003-presente) | ~18 MB |
-| `pyg.parquet` | Pérdidas y Ganancias (2003-presente) | ~10 MB |
-| `camel.parquet` | Indicadores CAMEL calculados | ~1.6 MB |
-| `metadata.json` | Información de la última actualización | <1 KB |
-| `update_status.json` | Estado del proceso de actualización | <1 KB |
-
-## Calendario de Ejecución
-
-```
-Enero    → El día 10 se descargan datos de Diciembre del año anterior
-Febrero  → El día 10 se descargan datos de Enero
-Marzo    → El día 10 se descargan datos de Febrero
-...
-Diciembre → El día 10 se descargan datos de Noviembre
+```text
+master_data/balance.parquet
+master_data/pyg.parquet
+master_data/camel.parquet
+master_data/metadata.json
+master_data/update_status.json
 ```
 
-## Manejo de Errores
+No se debe publicar un subconjunto de estos archivos para un corte nuevo.
 
-### Si los datos no están disponibles el día 6:
-- El workflow descarga a una carpeta temporal y valida los 23 ZIP y Excel
-- Comprueba que BAL, PYG y CAMEL tengan una fecha de corte uniforme
-- Si la fuente no avanzó, termina con código 2: no ejecuta ETL, no hace commit y no reinicia Streamlit
-- Se vuelve a ejecutar automáticamente cada 2 días (8, 10, 12... hasta el 20)
-- Cada reintento valida el estado real de los tres Parquet, no solo `update_status.json`
+## Validación de la fuente
 
-### Si el procesamiento falla:
-- Los procesadores terminan con error si falta una entidad o una hoja no puede procesarse
-- El orquestador restaura los tres Parquet desde un respaldo temporal
-- La puerta de calidad impide publicar pérdida de meses, bancos rezagados o claves duplicadas
-- Se puede revisar el log en GitHub Actions
-- Se puede ejecutar manualmente una vez corregido el problema
+`scripts/descargar.py` y `scripts/fuente_bancos.py` verifican antes de reemplazar la fuente local:
 
-## Ejecución Manual
+- exactamente 23 descargas;
+- cada archivo es un ZIP legible;
+- rutas internas seguras, sin extracción fuera del staging;
+- exactamente un XLSX por entidad;
+- hojas `BAL`, `PYG` y `CAMEL` presentes;
+- fecha interna uniforme entre hojas y bancos;
+- fecha de corte igual al mes objetivo y posterior al Parquet publicado.
 
-### Desde GitHub (recomendado):
-1. Ir a https://github.com/jp1309/bancos/actions
-2. Seleccionar "Actualizar Datos Bancarios"
-3. Clic en "Run workflow"
-4. Clic en el botón verde "Run workflow"
+La descarga se realiza en archivos y directorios temporales. La fuente vigente solo se reemplaza después de validar el staging completo.
 
-### Desde línea de comandos (local):
+## Orquestador transaccional
+
+`scripts/actualizar_datos.py`:
+
+1. Comprueba el estado real de los Parquet.
+2. Captura el estado anterior de meses y bancos.
+3. Descarga y valida la fuente.
+4. Respalda los tres Parquet y los dos JSON en un directorio temporal.
+5. Ejecuta Balance, PyG y CAMEL.
+6. Comprueba que los artefactos existan.
+7. Ejecuta la puerta de calidad con el estado anterior.
+8. Genera `update_status.json` y limpia temporales.
+9. Si algo falla desde el ETL en adelante, restaura los cinco artefactos respaldados.
+
+## Códigos de salida
+
+| Código | Significado | GitHub Actions |
+|---:|---|---|
+| `0` | Actualización correcta o publicación ya completa | Éxito |
+| `2` | Fuente oficial todavía sin el mes objetivo | Éxito sin ETL/commit |
+| Otro | Error real de descarga, procesamiento o validación | Falla el job |
+
+El workflow usa `set +e` únicamente alrededor del orquestador para capturar el código `2`; después restablece `set -e`.
+
+## Puerta de publicación
+
+`scripts/validar_actualizacion.py` exige para Balance, PyG y CAMEL:
+
+- Parquet existente, legible y no vacío;
+- esquema obligatorio;
+- fecha válida y fecha máxima exacta;
+- continuidad mensual global;
+- 23 bancos únicos y 23 en el último corte;
+- cero duplicados en la clave de cada dataset;
+- fecha coherente en `metadata.json` y `bancos_error` vacío;
+- sin pérdida de meses, bancos o inicio histórico respecto del estado previo.
+
+Solo si esta validación pasa se prepara el commit automático.
+
+## Ejecución manual en GitHub
+
+Interfaz:
+
+1. Abrir [Actualizar Datos Bancarios](https://github.com/jp1309/bancos/actions/workflows/actualizar-datos.yml).
+2. Seleccionar **Run workflow**.
+3. Usar la rama `main`.
+4. Revisar el resumen y los pasos omitidos o ejecutados.
+
+CLI:
+
 ```bash
-cd c:\Users\HP\OneDrive\JpE\Github\bancos
+gh workflow run actualizar-datos.yml --repo jp1309/bancos --ref main
+gh run list --repo jp1309/bancos --workflow actualizar-datos.yml --limit 5
+gh run watch RUN_ID --repo jp1309/bancos --exit-status
+gh run view RUN_ID --repo jp1309/bancos --log
+```
+
+## Ejecución manual local
+
+```bash
+python -m pip install -r requirements-scraping.txt
 python scripts/actualizar_datos.py
+echo $?
 ```
 
-## Dependencias
+En PowerShell, el código se consulta con `$LASTEXITCODE`.
 
-### Para Streamlit (producción):
-Archivo: `requirements.txt`
-```
-streamlit>=1.28.0
-pandas>=2.0.0
-numpy>=1.24.0
-pyarrow>=12.0.0
-plotly>=5.14.0
-kaleido
+Antes de publicar un resultado local:
+
+```bash
+python -m unittest discover -s tests -v
+python scripts/validar_actualizacion.py
+git diff --check
 ```
 
-### Para Scraping (GitHub Actions):
-Archivo: `requirements-scraping.txt`
-```
-selenium>=4.15.0
-webdriver-manager>=4.0.1
-requests>=2.31.0
-pandas>=2.0.0
-numpy>=1.24.0
-pyarrow>=12.0.0
-openpyxl>=3.1.0
-```
+## Permisos y configuración de producción
+
+- La rama por defecto debe ser `main`; los cron solo se ejecutan desde la rama por defecto.
+- El workflow declara `permissions: contents: write` para el commit automático.
+- Streamlit Cloud debe apuntar a `jp1309/bancos`, rama `main`, archivo `Inicio.py`.
+- El workflow tiene timeout de 30 minutos.
+- `NUMERO_ESPERADO_BANCOS = 23` es una barrera intencional. Una fusión, cierre o nueva entidad requiere revisión humana antes de cambiarlo.
 
 ## Monitoreo
 
-### Ver estado de las ejecuciones:
-- GitHub Actions: https://github.com/jp1309/bancos/actions
+Un run correcto puede terminar de dos formas:
 
-### Ver última actualización:
-- En el dashboard: Aparece la fecha de última actualización
-- En el archivo: `master_data/update_status.json`
+- **rápido/no-op:** la publicación ya está completa o la fuente aún no avanzó;
+- **actualización:** descarga, ETL, validación, commit y push.
 
-## Fuente de Datos
+Revise siempre:
 
-**Portal:** Superintendencia de Bancos del Ecuador
-**URL:** https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos-2/
+- commit utilizado por el run;
+- período objetivo;
+- `Necesitaba actualizar` y `Datos nuevos` del resumen;
+- fecha y cobertura reportadas por la puerta de calidad;
+- existencia del commit automático cuando hubo avance real;
+- mes visible en la aplicación después del redespliegue.
 
-Los datos son públicos y no requieren autenticación.
-
-## Requisitos Críticos para que Funcione
-
-### 1. Branch default debe ser `main`
-GitHub Actions **solo ejecuta cron schedules desde el branch default**. Si el default es otro branch (ej. `master`), el workflow nunca se ejecutará automáticamente.
-
-**Verificar:**
-```bash
-gh api repos/jp1309/bancos --jq .default_branch
-# Debe devolver: main
-```
-
-**Corregir si es necesario:**
-```bash
-gh api repos/jp1309/bancos --method PATCH -f default_branch=main
-```
-
-### 2. Permisos del workflow
-El workflow necesita `permissions: contents: write` para poder hacer `git push`. Sin esto, la descarga y procesamiento funcionan pero los datos no se publican.
-
-### 3. URL del portal
-La URL para "Series por Entidad" (archivos ZIP individuales por banco) es:
-```
-https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos-2/
-```
-**NO confundir con** `bancos/` que contiene "Boletín Financiero Mensual" (formato diferente, no compatible con el script).
-
-### 4. Streamlit Cloud debe apuntar a `main`
-Verificar en https://share.streamlit.io que la app apunte al branch `main`.
-
-## Troubleshooting
-
-### El workflow no se ejecuta automáticamente
-1. Verificar que el branch default sea `main` (ver arriba)
-2. Verificar que el archivo `.github/workflows/actualizar-datos.yml` exista en `main`
-3. Revisar en https://github.com/jp1309/bancos/actions si el workflow aparece listado
-
-### Error: "Carpeta 'Año XXXX' no encontrada"
-- El portal carga contenido dinámicamente con JavaScript
-- El script tiene reintentos automáticos (6 intentos + recarga de página)
-- Si persiste: puede ser que el portal cambió su estructura o está caído
-- Ejecutar manualmente para ver los logs: `gh workflow run "Actualizar Datos Bancarios"`
-
-### Error: "Carpeta de boletines no encontrada"
-- Verificar que `CARPETA_BOLETINES_TEXTO` en `config.py` coincida con el texto del portal
-- Verificar que `URL_PORTAL` sea `bancos-2/` (NO `bancos/`)
-
-### Error: "Permission denied" en git push
-- Verificar que el workflow tenga `permissions: contents: write`
-- El `GITHUB_TOKEN` por defecto no tiene permisos de escritura
-
-### Los datos se descargaron pero no aparecen en la app
-1. Verificar que el push fue exitoso (revisar commits en GitHub)
-2. Verificar que Streamlit Cloud detectó el cambio (puede tardar unos minutos)
-3. Forzar reinicio desde https://share.streamlit.io → **Reboot app**
-
-### La app muestra un mes menos de lo esperado (ej. marzo en vez de abril)
-- **Causa:** El workflow marcó un período como descargado aunque el portal no lo había publicado aún
-- **Diagnóstico:** `python -c "import pandas as pd; df=pd.read_parquet('master_data/balance.parquet', columns=['fecha']); print(df['fecha'].max())"`
-- **Solución rápida:** Editar `master_data/update_status.json` → cambiar `ultimo_periodo_descargado` al período real (ej. "MARZO 2026") y disparar el workflow manualmente
-- **Nota:** Este bug fue corregido en mayo 2026. El script ahora verifica la `fecha_max` del parquet real, no el período objetivo
-
-### Ejecutar manualmente desde CLI
-```bash
-# Disparar workflow desde línea de comandos
-gh workflow run "Actualizar Datos Bancarios" --repo jp1309/bancos
-
-# Ver estado
-gh run list --workflow="Actualizar Datos Bancarios" --repo jp1309/bancos --limit=3
-
-# Ver logs del último run
-gh run view $(gh run list --workflow="Actualizar Datos Bancarios" --limit=1 --json databaseId -q '.[0].databaseId') --log
-```
-
-## Historial de Incidentes
-
-### Marzo 2026: Workflow no se ejecutó por 1 mes
-**Síntoma:** Datos estancados en enero 2026 cuando deberían estar en febrero.
-**Causa raíz:** El branch default en GitHub era `master` (un commit antiguo), mientras todo el código estaba en `main`. GitHub Actions solo ejecuta cron desde el default branch.
-**Problemas secundarios encontrados:**
-- `GITHUB_TOKEN` sin permisos de escritura → push fallaba silenciosamente
-- Tiempos de espera insuficientes para carga dinámica del portal en headless
-**Solución:** Cambiar default a `main`, agregar `permissions: contents: write`, mejorar reintentos del scraping.
-**Lección:** Siempre verificar que el default branch sea el correcto después de crear un repo.
-
-### Mayo 2026: App mostraba marzo cuando debería mostrar abril
-**Síntoma:** Workflow del 6 de mayo reportó éxito con "ABRIL 2026" pero el parquet real solo llegaba hasta marzo.
-**Causa raíz:** `actualizar_datos.py` guardaba en `update_status.json` el *período objetivo* (mes anterior a la fecha de ejecución) sin verificar si los datos del parquet realmente cambiaron. Cuando el portal SBS no había publicado abril aún, descargaba el mismo ZIP de antes, procesaba sin cambios, y marcaba "ABRIL" como actualizado. Los reintentos del 8, 10, 12... se saltaban todos pensando que ya estaba listo.
-**Solución:**
-1. `verificar_datos_ya_actualizados()` ahora lee `fecha_max` directamente del parquet real
-2. `generar_reporte()` ahora guarda el período real del parquet, no el objetivo
-3. Se corrigió manualmente `update_status.json` para forzar el próximo reintento
-**Lección:** Siempre verificar el estado real de los datos (parquet), no confiar en archivos de estado que pueden quedar desincronizados con la realidad.
-
-## Notas Importantes
-
-1. **Los archivos .parquet están en el repositorio:** Esto permite que Streamlit Cloud funcione sin necesidad de ejecutar el scraping cada vez.
-
-2. **El workflow usa Chrome headless:** No necesita interfaz gráfica para funcionar en GitHub Actions. Usa flags `--no-sandbox`, `--disable-dev-shm-usage` y `--window-size=1920,1080` para compatibilidad.
-
-3. **Los datos temporales se eliminan:** Después de procesar, se eliminan los archivos ZIP y Excel descargados para no ocupar espacio en el repositorio.
-
-4. **Streamlit Cloud se actualiza automáticamente:** Cuando se hace push de nuevos archivos parquet, Streamlit Cloud detecta los cambios y reinicia la aplicación.
-
-5. **Tiempos de espera dinámicos:** Los tiempos de espera del scraping son mayores en GitHub Actions (CI) que en ejecución local, configurados en `config.py`.
+Para incidentes y rollback, consulte [OPERACION_Y_RECUPERACION.md](OPERACION_Y_RECUPERACION.md).

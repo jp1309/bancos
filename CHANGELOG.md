@@ -4,6 +4,29 @@ Nota: Este changelog incluye entradas historicas de modulos y archivos que ya no
 
 Registro de cambios y mejoras del dashboard de Business Intelligence.
 
+## [4.3.0] - 2026-07-18
+
+### Datos y automatización
+
+- Publicado y validado el corte de junio de 2026 para Balance, PyG y CAMEL.
+- La descarga valida 23 ZIP/XLSX, las tres hojas requeridas y la fecha interna uniforme.
+- El pipeline trata la fuente sin avance como no-op mediante código de salida `2`.
+- Los tres procesadores usan escritura atómica y el orquestador restaura los artefactos anteriores ante fallos.
+- Nueva puerta de publicación para esquema, fecha, continuidad mensual, cobertura, duplicados, metadata e historia.
+- Workflow con permisos explícitos de escritura y reintentos del 6 al 20 de cada mes.
+
+### Aplicación
+
+- Portada alimentada por `metadata.json`, sin cifras mensuales escritas a mano.
+- Cobertura visible y validada de 23 bancos hasta junio de 2026.
+- Reducción de memoria mediante categorías y `groupby(observed=True)`.
+
+### Documentación
+
+- Reescritos README, inicio rápido, contribución y ficha del proyecto.
+- Añadidos runbook de operación/recuperación, diccionario de datos y arquitectura.
+- Consolidado el índice de fuentes de verdad y separadas las notas históricas.
+
 ## [4.2.0] - 2026-01-28
 
 ### Rediseño de Interfaz
