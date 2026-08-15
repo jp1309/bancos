@@ -39,7 +39,7 @@ validar_actualizacion.py
 commit de cinco artefactos + push a main
         │
         ▼
-Streamlit detecta el commit y redespliega
+Streamlit detecta el commit, invalida la cache por huella y redespliega
 ```
 
 ## Artefactos publicados como una unidad
@@ -110,6 +110,8 @@ El workflow usa `set +e` únicamente alrededor del orquestador para capturar el 
 Los nombres se normalizan mediante una identidad canónica que tolera variantes de mayúsculas, acentos y composición Unicode. Esto evita dividir una serie cuando el portal corrige la escritura de una entidad.
 
 Solo si esta validación pasa se prepara el commit automático.
+
+Las funciones de `utils/data_loader.py` incluyen tamaño y fecha de modificación del Parquet en la clave de caché. Por ello un despliegue nuevo no puede seguir sirviendo el DataFrame del corte anterior, aunque Streamlit haga recarga en caliente y conserve su proceso.
 
 ## Ejecución manual en GitHub
 

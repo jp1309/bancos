@@ -49,7 +49,8 @@ El flujo descarga 23 entidades, procesa los tres productos, valida y crea un com
 | Duplicados de clave | Error de extracción/consolidación | Corregir procesador; no eliminar a ciegas después del ETL |
 | PyG o CAMEL pierde meses | Reemplazo histórico incorrecto | Restaurar y revisar lógica de solapamiento |
 | `git push` denegado en Actions | Falta `contents: write` o protección de rama | Revisar permisos y reglas de `main` |
-| GitHub está correcto pero Streamlit está viejo | Redespliegue pendiente o app mal configurada | Verificar repo/rama/entrypoint y hacer Reboot app |
+| Portada nueva pero un módulo conserva el mes anterior | Caché de DataFrame no invalidada | Verificar la huella en `data_loader.py`; no fijar loaders sin versión de archivo |
+| GitHub está correcto pero todo Streamlit está viejo | Redespliegue pendiente o app mal configurada | Verificar repo/rama/entrypoint y hacer Reboot app |
 | Primera visita tarda | App dormida en Community Cloud | Despertar la app; no es pérdida de datos |
 | Un temporal de OneDrive no se puede borrar | Carpeta local bloqueada o punto de reanálisis | La siguiente ejecución usa otro staging; retirar luego solo el temporal específico |
 

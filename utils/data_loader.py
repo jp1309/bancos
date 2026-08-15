@@ -13,6 +13,12 @@ import json
 MASTER_DATA_DIR = Path(__file__).parent.parent / "master_data"
 
 
+def _huella_archivo(filepath: Path) -> tuple[int, int]:
+    """Version ligera del archivo para invalidar caches tras cada publicacion."""
+    estado = filepath.stat()
+    return estado.st_size, estado.st_mtime_ns
+
+
 def _categorizar_columnas(df: pd.DataFrame, columnas: list[str]) -> pd.DataFrame:
     """Reduce memoria de columnas textuales repetitivas sin copiar todo el DataFrame."""
     for columna in columnas:
@@ -32,18 +38,24 @@ def _mascara_texto_valido(serie: pd.Series) -> pd.Series:
     return serie.notna() & serie.str.strip().ne('')
 
 
-@st.cache_data(ttl=3600)
 def cargar_balance() -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    filepath = MASTER_DATA_DIR / "balance.parquet"
+    if not filepath.exists():
+        raise FileNotFoundError(f"No se encontro {filepath}")
+    return _cargar_balance_cache(str(filepath), _huella_archivo(filepath))
+
+
+@st.cache_data(ttl=3600)
+def _cargar_balance_cache(
+    filepath_texto: str, huella: tuple[int, int]
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
     Carga balance.parquet con limpieza y metricas de calidad.
 
     Returns:
         Tuple[DataFrame, Dict]: DataFrame limpio y metricas de calidad
     """
-    filepath = MASTER_DATA_DIR / "balance.parquet"
-
-    if not filepath.exists():
-        raise FileNotFoundError(f"No se encontro {filepath}")
+    filepath = Path(filepath_texto)
 
     df = pd.read_parquet(filepath)
     registros_originales = len(df)
@@ -91,8 +103,17 @@ def cargar_balance() -> Tuple[pd.DataFrame, Dict[str, Any]]:
 # =============================================================================
 
 
-@st.cache_data(ttl=3600)
 def cargar_pyg() -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    filepath = MASTER_DATA_DIR / "pyg.parquet"
+    if not filepath.exists():
+        raise FileNotFoundError(f"No se encontro {filepath}")
+    return _cargar_pyg_cache(str(filepath), _huella_archivo(filepath))
+
+
+@st.cache_data(ttl=3600)
+def _cargar_pyg_cache(
+    filepath_texto: str, huella: tuple[int, int]
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
     Carga pyg.parquet (Pérdidas y Ganancias) con metricas de calidad.
 
@@ -104,10 +125,7 @@ def cargar_pyg() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     Returns:
         Tuple[DataFrame, Dict]: DataFrame y metricas de calidad
     """
-    filepath = MASTER_DATA_DIR / "pyg.parquet"
-
-    if not filepath.exists():
-        raise FileNotFoundError(f"No se encontro {filepath}")
+    filepath = Path(filepath_texto)
 
     df = pd.read_parquet(filepath)
     registros_originales = len(df)
@@ -143,8 +161,17 @@ def cargar_pyg() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     return df, calidad
 
 
-@st.cache_data(ttl=3600)
 def cargar_camel() -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    filepath = MASTER_DATA_DIR / "camel.parquet"
+    if not filepath.exists():
+        raise FileNotFoundError(f"No se encontro {filepath}")
+    return _cargar_camel_cache(str(filepath), _huella_archivo(filepath))
+
+
+@st.cache_data(ttl=3600)
+def _cargar_camel_cache(
+    filepath_texto: str, huella: tuple[int, int]
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
     Carga camel.parquet (Indicadores CAMEL) con metricas de calidad.
 
@@ -159,10 +186,7 @@ def cargar_camel() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     Returns:
         Tuple[DataFrame, Dict]: DataFrame y metricas de calidad
     """
-    filepath = MASTER_DATA_DIR / "camel.parquet"
-
-    if not filepath.exists():
-        raise FileNotFoundError(f"No se encontro {filepath}")
+    filepath = Path(filepath_texto)
 
     df = pd.read_parquet(filepath)
     registros_originales = len(df)
@@ -197,21 +221,24 @@ def cargar_camel() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     return df, calidad
 
 
-@st.cache_data(ttl=3600)
 def cargar_metadata() -> Dict[str, Any]:
+    filepath = MASTER_DATA_DIR / "metadata.json"
+    if not filepath.exists():
+        return {'error': 'metadata.json no encontrado'}
+    return _cargar_metadata_cache(str(filepath), _huella_archivo(filepath))
+
+
+@st.cache_data(ttl=3600)
+def _cargar_metadata_cache(filepath_texto: str, huella: tuple[int, int]) -> Dict[str, Any]:
     """
     Carga metadata.json con información de la última actualización.
     """
-    filepath = MASTER_DATA_DIR / "metadata.json"
-
-    if not filepath.exists():
-        return {'error': 'metadata.json no encontrado'}
+    filepath = Path(filepath_texto)
 
     with open(filepath, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 
-@st.cache_data(ttl=3600)
 def cargar_todos_los_datos() -> Dict[str, Any]:
     """
     Carga todos los datasets de una vez con sus metricas de calidad.

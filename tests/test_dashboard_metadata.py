@@ -1,6 +1,16 @@
 import unittest
+import tempfile
+import importlib.util
+from pathlib import Path
+from unittest.mock import patch
 
 from dashboard_metadata import resumir_metadata
+
+
+DATA_LOADER_PATH = Path(__file__).parent.parent / "utils" / "data_loader.py"
+SPEC = importlib.util.spec_from_file_location("data_loader_under_test", DATA_LOADER_PATH)
+data_loader = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(data_loader)
 
 
 class DashboardMetadataTests(unittest.TestCase):
@@ -26,6 +36,24 @@ class DashboardMetadataTests(unittest.TestCase):
         self.assertFalse(resumen["completa"])
         self.assertEqual(resumen["bancos"], "N/D")
         self.assertEqual(resumen["datos_al"], "N/D")
+
+    def test_cache_balance_recibe_huella_del_parquet(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directorio = Path(tmp)
+            parquet = directorio / "balance.parquet"
+            parquet.write_bytes(b"version-1")
+            original = data_loader.MASTER_DATA_DIR
+            data_loader.MASTER_DATA_DIR = directorio
+            self.addCleanup(setattr, data_loader, "MASTER_DATA_DIR", original)
+
+            with patch.object(
+                data_loader, "_cargar_balance_cache", return_value=(None, {})
+            ) as cache:
+                data_loader.cargar_balance()
+
+            cache.assert_called_once_with(
+                str(parquet), data_loader._huella_archivo(parquet)
+            )
 
 
 if __name__ == "__main__":
