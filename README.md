@@ -88,7 +88,7 @@ Abrir `http://localhost:8501`. La guía paso a paso está en [QUICKSTART.md](QUI
 
 ## Actualización de datos
 
-La vía recomendada es el workflow **Actualizar Datos Bancarios** en GitHub Actions. Se ejecuta diariamente del 6 al 20 de cada mes a las 13:00 UTC, equivalente a las 08:00 de Ecuador continental (UTC-5). Si el portal aún anuncia el corte anterior, termina sin descargar los 23 boletines; cuando el mes aparece, valida el contenido interno antes de publicar.
+La vía recomendada es el workflow **Actualizar Datos Bancarios** en GitHub Actions. Se ejecuta todos los días a las 13:00 UTC, equivalente a las 08:00 de Ecuador continental (UTC-5). Si el portal aún anuncia el corte anterior, termina sin descargar los 23 boletines; cuando el mes aparece, valida el contenido interno antes de publicar.
 
 Ejecución manual local:
 

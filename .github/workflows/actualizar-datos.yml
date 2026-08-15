@@ -2,8 +2,8 @@ name: Actualizar Datos Bancarios
 
 on:
   schedule:
-    # La SB no publica siempre el mismo dia: revisar a diario en su ventana habitual.
-    - cron: '0 13 6-20 * *'
+    # La SB no publica siempre el mismo dia: revisar a diario sin ventana ciega.
+    - cron: '0 13 * * *'
   workflow_dispatch:
 
 concurrency:

@@ -14,7 +14,7 @@ Radar Bancario Ecuador transforma boletines mensuales por entidad de la Superint
 | Corte publicado | 31 de julio de 2026 |
 | Cobertura último mes | 23 bancos en Balance, PyG y CAMEL |
 | Historia | enero de 2003-julio de 2026 |
-| Automatización | GitHub Actions, revisión diaria del 6 al 20 |
+| Automatización | GitHub Actions, revisión diaria todo el mes |
 | Licencia | MIT para el software |
 
 ## Productos de datos

@@ -18,7 +18,7 @@ Registro de cambios y mejoras del dashboard de Business Intelligence.
 - Añadidos reintentos HTTP y descarga segura mediante Chrome cuando el portal entrega una cadena TLS incompleta.
 - Los no-op se resuelven antes de descargar 23 ZIP si el portal aún anuncia el corte anterior.
 - Se reutiliza una fuente local ya validada al reintentar el ETL y cada run usa un staging único.
-- Revisión diaria del 6 al 20, exclusión de concurrencia y timeout de 30 minutos.
+- Revisión diaria todo el mes, exclusión de concurrencia y timeout de 30 minutos.
 - Nuevas pruebas para enlaces permitidos, publicaciones rezagadas/parciales y nombres canónicos.
 - La caché de Streamlit incorpora la huella de cada archivo y se invalida con cada publicación.
 

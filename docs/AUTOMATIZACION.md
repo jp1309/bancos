@@ -8,11 +8,11 @@ La automatización está definida en `.github/workflows/actualizar-datos.yml` y 
 
 ## Calendario
 
-GitHub Actions intenta la actualización diariamente del 6 al 20 de cada mes a las 13:00 UTC (08:00 de Ecuador continental, UTC-5).
+GitHub Actions intenta la actualización todos los días a las 13:00 UTC (08:00 de Ecuador continental, UTC-5).
 
 El período objetivo se calcula en tiempo de ejecución como el mes calendario anterior. En enero, el cálculo cambia automáticamente al diciembre del año anterior.
 
-Los reintentos existen porque la publicación oficial no ocurre siempre el mismo día. Un intento sin avance es un no-op normal, no un incidente. El workflow impide ejecuciones concurrentes y limita cada job a 30 minutos.
+Los reintentos existen porque la publicación oficial no ocurre siempre el mismo día. Un intento sin avance es un no-op normal, no un incidente. La revisión diaria evita quedar ciegos ante publicaciones posteriores al día 20; el workflow impide ejecuciones concurrentes y limita cada job a 30 minutos.
 
 ## Flujo del workflow
 
