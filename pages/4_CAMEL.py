@@ -547,7 +547,7 @@ def main():
             bancos_evol = st.multiselect(
                 "Bancos a comparar",
                 bancos_disponibles,
-                default=['Pichincha', 'Guayaquil', 'Pacifico'] if all(b in bancos_disponibles for b in ['Pichincha', 'Guayaquil', 'Pacifico']) else bancos_disponibles[:3],
+                default=['Pichincha', 'Guayaquil', 'Pacífico'] if all(b in bancos_disponibles for b in ['Pichincha', 'Guayaquil', 'Pacífico']) else bancos_disponibles[:3],
                 max_selections=8
             )
 

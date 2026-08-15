@@ -4,6 +4,23 @@ Nota: Este changelog incluye entradas historicas de modulos y archivos que ya no
 
 Registro de cambios y mejoras del dashboard de Business Intelligence.
 
+## [4.4.0] - 2026-08-14
+
+### Datos
+
+- Publicado y validado el corte de julio de 2026 en Balance, PyG y CAMEL.
+- Confirmados 23 bancos en el último mes de los tres datasets.
+- Normalizados nombres equivalentes con acentos, mayúsculas y Unicode para conservar series continuas.
+
+### Automatización
+
+- Eliminados los tokens de OneDrive codificados: el descargador usa los enlaces vigentes del DOM.
+- Añadidos reintentos HTTP y descarga segura mediante Chrome cuando el portal entrega una cadena TLS incompleta.
+- Los no-op se resuelven antes de descargar 23 ZIP si el portal aún anuncia el corte anterior.
+- Se reutiliza una fuente local ya validada al reintentar el ETL y cada run usa un staging único.
+- Revisión diaria del 6 al 20, exclusión de concurrencia y timeout de 30 minutos.
+- Nuevas pruebas para enlaces permitidos, publicaciones rezagadas/parciales y nombres canónicos.
+
 ## [4.3.0] - 2026-07-18
 
 ### Datos y automatización

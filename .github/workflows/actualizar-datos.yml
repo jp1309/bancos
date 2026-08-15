@@ -2,15 +2,13 @@ name: Actualizar Datos Bancarios
 
 on:
   schedule:
-    - cron: '0 13 6 * *'
-    - cron: '0 13 8 * *'
-    - cron: '0 13 10 * *'
-    - cron: '0 13 12 * *'
-    - cron: '0 13 14 * *'
-    - cron: '0 13 16 * *'
-    - cron: '0 13 18 * *'
-    - cron: '0 13 20 * *'
+    # La SB no publica siempre el mismo dia: revisar a diario en su ventana habitual.
+    - cron: '0 13 6-20 * *'
   workflow_dispatch:
+
+concurrency:
+  group: actualizar-datos-bancarios
+  cancel-in-progress: false
 
 permissions:
   contents: write

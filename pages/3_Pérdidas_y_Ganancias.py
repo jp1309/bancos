@@ -96,7 +96,7 @@ def main():
     }
 
     # Bancos por defecto para seleccion (con nombres exactos como aparecen en los datos)
-    BANCOS_DEFAULT = ['Pichincha', 'Pacifico', 'Guayaquil', 'Produbanco']
+    BANCOS_DEFAULT = ['Pichincha', 'Pacífico', 'Guayaquil', 'Produbanco']
 
     # Filtrar solo los que existen en los datos
     bancos_exactos = [b for b in BANCOS_DEFAULT if b in bancos]

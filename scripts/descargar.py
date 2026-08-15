@@ -15,6 +15,7 @@ import sys
 import os
 import re
 import calendar
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from pathlib import Path
 try:
     import config
     from fuente_bancos import validar_directorio_fuentes, validar_zip
+    from portal_bancos import clasificar_publicacion, preparar_archivos_dom
 except ImportError:
     print("ERROR: No se encontró el archivo config.py")
     print("Asegúrate de estar en la carpeta correcta del proyecto")
@@ -36,6 +38,8 @@ if sys.platform == 'win32':
 # Importar librerías necesarias
 try:
     import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.chrome.options import Options
@@ -85,15 +89,43 @@ def main():
 
     # Crear carpeta de salida
     carpeta_final = Path(os.getcwd()) / config.get_carpeta_salida()
-    carpeta_temporal = carpeta_final.with_name(f"{carpeta_final.name}.tmp")
-    if carpeta_temporal.exists():
-        shutil.rmtree(carpeta_temporal)
-    carpeta_temporal.mkdir(parents=True)
+    fecha_esperada = datetime(
+        config.ANO_OBJETIVO,
+        config.MES_OBJETIVO,
+        calendar.monthrange(config.ANO_OBJETIVO, config.MES_OBJETIVO)[1],
+    )
+    fuente_existente = carpeta_final / "archivos_excel"
+    if fuente_existente.exists():
+        try:
+            validar_directorio_fuentes(
+                fuente_existente,
+                fecha_esperada=fecha_esperada,
+                bancos_esperados=config.NUMERO_ESPERADO_BANCOS,
+            )
+            print(f"Fuente local ya validada en {fuente_existente}; se reutiliza.")
+            return
+        except Exception as exc:
+            print(f"Fuente local no reutilizable: {exc}")
+
+    carpeta_temporal = Path(tempfile.mkdtemp(
+        prefix=f"{carpeta_final.name}.tmp-",
+        dir=str(carpeta_final.parent),
+    ))
     download_dir = str(carpeta_temporal)
+    chrome_options.add_experimental_option("prefs", {
+        "download.default_directory": download_dir,
+        "download.prompt_for_download": False,
+        "download.directory_upgrade": True,
+        "safebrowsing.enabled": True,
+    })
 
     print(f"\nIniciando navegador Chrome...")
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.execute_cdp_cmd(
+        "Page.setDownloadBehavior",
+        {"behavior": "allow", "downloadPath": download_dir},
+    )
 
     archivos_encontrados = []
 
@@ -216,7 +248,8 @@ def main():
 
         time.sleep(10)
 
-        # PASO 5: Buscar archivos usando JavaScript para extraer data-id
+        # PASO 5: Buscar archivos y usar el enlace real publicado en el DOM.
+        # Los tokens de SharePoint pueden cambiar; no deben estar codificados aqui.
         print(f"[5/5] Extrayendo enlaces de descarga...")
 
         # Usar JavaScript para buscar los elementos y extraer sus atributos
@@ -231,7 +264,8 @@ def main():
                 if (dataId) {
                     results.push({
                         nombre: nameElem.textContent.trim(),
-                        id: dataId
+                        id: dataId,
+                        url: nameElem.href
                     });
                 }
             }
@@ -243,21 +277,7 @@ def main():
         archivos_javascript = driver.execute_script(script)
         print(f"  Archivos encontrados: {len(archivos_javascript)}")
 
-        for archivo in archivos_javascript:
-            # Construir la URL de descarga con el ID correcto
-            download_url = (
-                f"https://www.superbancos.gob.ec/estadisticas/portalestudios/wp-admin/admin-ajax.php?"
-                f"action=shareonedrive-download&id={archivo['id']}"
-                f"&account_id=341c37a6-daa9-4b83-adad-506b00ccb984"
-                f"&drive_id=b!Iz-mji9B1EqK1eiAuGWU7x82x3m7uftFja_xK_rSLWY6gLR41EOqTYg222Ho8lwD"
-                f"&listtoken=cb2dcac486c20e9c7a63b3bc95e58f46"
-            )
-
-            archivos_encontrados.append({
-                'nombre': archivo['nombre'],
-                'url': download_url,
-                'id': archivo['id']
-            })
+        archivos_encontrados = preparar_archivos_dom(archivos_javascript)
 
         # Eliminar duplicados
         archivos_unicos = {}
@@ -290,6 +310,19 @@ def main():
             print(f"    pero se encontraron {len(archivos_encontrados)}")
             raise RuntimeError("Cobertura incompleta de entidades en el portal")
 
+        estado_publicacion = clasificar_publicacion(
+            archivos_encontrados,
+            config.PERIODO_DESCARGA,
+            config.NUMERO_ESPERADO_BANCOS,
+        )
+        if estado_publicacion == "rezagada":
+            print(
+                f"\nLa fuente todavia no anuncia {config.PERIODO_DESCARGA}. "
+                "Sin descargar archivos rezagados."
+            )
+            shutil.rmtree(carpeta_temporal, ignore_errors=True)
+            sys.exit(2)
+
         # Descargar
         print(f"\n{'='*80}")
         print(f"DESCARGANDO {len(archivos_encontrados)} ARCHIVOS")
@@ -300,18 +333,59 @@ def main():
         session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         })
+        reintentos = Retry(
+            total=3,
+            connect=3,
+            read=3,
+            status=3,
+            backoff_factor=1,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=frozenset({"GET"}),
+        )
+        session.mount("https://", HTTPAdapter(max_retries=reintentos))
 
         exitosos = 0
         fallidos = 0
+        usar_chrome = False
+
+        def descargar_con_chrome(url, destino):
+            """Descarga con Chrome si Requests no puede validar la cadena TLS."""
+            destino = Path(destino)
+            existentes = {p.name for p in carpeta_temporal.glob("*.zip")}
+            driver.execute_script(
+                """
+                const enlace = document.createElement('a');
+                enlace.href = arguments[0];
+                enlace.style.display = 'none';
+                document.body.appendChild(enlace);
+                enlace.click();
+                enlace.remove();
+                """,
+                url,
+            )
+            limite = time.time() + config.TIMEOUT_DESCARGA
+            while time.time() < limite:
+                parciales = list(carpeta_temporal.glob("*.crdownload"))
+                nuevos = [
+                    p for p in carpeta_temporal.glob("*.zip")
+                    if p.name not in existentes
+                ]
+                if destino.exists() and not parciales:
+                    return
+                if len(nuevos) == 1 and not parciales:
+                    if nuevos[0] != destino:
+                        nuevos[0].replace(destino)
+                    return
+                time.sleep(0.5)
+            raise TimeoutError(
+                f"Chrome no completo la descarga en {config.TIMEOUT_DESCARGA}s"
+            )
 
         for idx, archivo in enumerate(archivos_encontrados, 1):
             filepath_temporal = None
             try:
                 nombre_corto = archivo['nombre'][:45]
                 print(f"[{idx:3}/{len(archivos_encontrados)}] {nombre_corto:45} ... ", end='', flush=True)
-
-                response = session.get(archivo['url'], stream=True, timeout=config.TIMEOUT_DESCARGA)
-                response.raise_for_status()
 
                 filename = archivo['nombre']
                 if not filename.endswith('.zip'):
@@ -320,20 +394,39 @@ def main():
                 filepath = os.path.join(download_dir, filename)
                 filepath_temporal = f"{filepath}.part"
 
-                with open(filepath_temporal, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=config.CHUNK_SIZE):
-                        if chunk:
-                            f.write(chunk)
+                if usar_chrome:
+                    descargar_con_chrome(archivo['url'], filepath)
+                else:
+                    try:
+                        response = session.get(
+                            archivo['url'], stream=True, timeout=config.TIMEOUT_DESCARGA
+                        )
+                        response.raise_for_status()
+                        with open(filepath_temporal, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=config.CHUNK_SIZE):
+                                if chunk:
+                                    f.write(chunk)
+                        os.replace(filepath_temporal, filepath)
+                    except requests.RequestException as exc:
+                        usar_chrome = True
+                        if os.path.exists(filepath_temporal):
+                            os.remove(filepath_temporal)
+                        print(
+                            f"Requests fallo ({type(exc).__name__}); "
+                            "reintentando con Chrome ... ",
+                            end='',
+                            flush=True,
+                        )
+                        descargar_con_chrome(archivo['url'], filepath)
 
-                validar_zip(Path(filepath_temporal))
-                os.replace(filepath_temporal, filepath)
+                validar_zip(Path(filepath))
 
                 size_mb = os.path.getsize(filepath) / (1024 * 1024)
                 print(f"✓ ({size_mb:5.2f} MB)")
                 exitosos += 1
 
             except Exception as e:
-                print(f"✗ {str(e)[:30]}")
+                print(f"✗ {type(e).__name__}: {e}")
                 if filepath_temporal and os.path.exists(filepath_temporal):
                     os.remove(filepath_temporal)
                 fallidos += 1
@@ -438,11 +531,6 @@ def main():
             else:
                 raise RuntimeError(f"{errores_zip} archivo(s) fallaron al descomprimir")
 
-            fecha_esperada = datetime(
-                config.ANO_OBJETIVO,
-                config.MES_OBJETIVO,
-                calendar.monthrange(config.ANO_OBJETIVO, config.MES_OBJETIVO)[1],
-            )
             inspecciones = validar_directorio_fuentes(
                 Path(extracted_dir),
                 fecha_esperada=fecha_esperada,

@@ -12,11 +12,11 @@
 
 | Archivo | Filas | Tamaño | Fecha mínima | Fecha máxima | Bancos último mes |
 |---|---:|---:|---:|---:|---:|
-| `balance.parquet` | 8.152.043 | 18,31 MB | 2003-01-31 | 2026-06-30 | 23 |
-| `pyg.parquet` | 755.584 | 9,41 MB | 2003-01-31 | 2026-06-30 | 23 |
-| `camel.parquet` | 230.102 | 1,52 MB | 2003-01-31 | 2026-06-30 | 23 |
+| `balance.parquet` | 8.183.806 | 19,66 MB | 2003-01-31 | 2026-07-31 | 23 |
+| `pyg.parquet` | 758.528 | 9,59 MB | 2003-01-31 | 2026-07-31 | 23 |
+| `camel.parquet` | 230.999 | 1,56 MB | 2003-01-31 | 2026-07-31 | 23 |
 
-Fotografía verificada el 18 de julio de 2026. Para el estado vigente, consultar `master_data/metadata.json` y ejecutar `scripts/validar_actualizacion.py`.
+Fotografía verificada el 14 de agosto de 2026. Para el estado vigente, consultar `master_data/metadata.json` y ejecutar `scripts/validar_actualizacion.py`.
 
 ## `balance.parquet`
 

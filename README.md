@@ -15,9 +15,9 @@ Dashboard público en Streamlit para explorar la evolución del sistema bancario
 
 | Dataset | Período | Filas | Bancos en el último mes |
 |---|---:|---:|---:|
-| Balance | ene. 2003-jun. 2026 | 8.152.043 | 23 |
-| Pérdidas y ganancias | ene. 2003-jun. 2026 | 755.584 | 23 |
-| CAMEL | ene. 2003-jun. 2026 | 230.102 | 23 |
+| Balance | ene. 2003-jul. 2026 | 8.183.806 | 23 |
+| Pérdidas y ganancias | ene. 2003-jul. 2026 | 758.528 | 23 |
+| CAMEL | ene. 2003-jul. 2026 | 230.999 | 23 |
 
 La cifra vigente no se mantiene a mano en la interfaz: la portada lee `master_data/metadata.json`. Antes de publicar, el pipeline exige que los tres Parquet lleguen al mismo mes y que las 23 entidades estén presentes en ese corte.
 
@@ -88,7 +88,7 @@ Abrir `http://localhost:8501`. La guía paso a paso está en [QUICKSTART.md](QUI
 
 ## Actualización de datos
 
-La vía recomendada es el workflow **Actualizar Datos Bancarios** en GitHub Actions. Se ejecuta los días 6, 8, 10, 12, 14, 16, 18 y 20 a las 13:00 UTC, equivalente a las 08:00 de Ecuador continental (UTC-5).
+La vía recomendada es el workflow **Actualizar Datos Bancarios** en GitHub Actions. Se ejecuta diariamente del 6 al 20 de cada mes a las 13:00 UTC, equivalente a las 08:00 de Ecuador continental (UTC-5). Si el portal aún anuncia el corte anterior, termina sin descargar los 23 boletines; cuando el mes aparece, valida el contenido interno antes de publicar.
 
 Ejecución manual local:
 

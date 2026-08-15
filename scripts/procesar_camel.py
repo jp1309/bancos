@@ -27,6 +27,7 @@ if sys.platform == 'win32' and hasattr(sys.stdout, 'reconfigure'):
 # Agregar directorio de scripts al path para importar config
 sys.path.insert(0, str(Path(__file__).parent))
 import config
+from nombres_bancos import normalizar_banco
 
 # Configuracion
 DATOS_DIR = Path(config.get_carpeta_salida()) / "archivos_excel"
@@ -99,7 +100,7 @@ def extraer_nombre_banco(ruta_archivo: Path) -> str:
         r'\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{4}$',
         '', nombre_carpeta, flags=re.IGNORECASE
     )
-    return nombre.strip()
+    return normalizar_banco(nombre)
 
 
 def procesar_archivo_camel(ruta_archivo: Path) -> pd.DataFrame:

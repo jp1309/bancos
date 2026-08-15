@@ -27,6 +27,7 @@ if sys.platform == 'win32' and hasattr(sys.stdout, 'reconfigure'):
 # Agregar directorio de scripts al path para importar config
 sys.path.insert(0, str(Path(__file__).parent))
 import config
+from nombres_bancos import normalizar_banco
 
 # =============================================================================
 # CONFIGURACION
@@ -45,7 +46,7 @@ def extraer_nombre_banco(carpeta: str) -> str:
         r'\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{4}$',
         '', carpeta, flags=re.IGNORECASE
     )
-    return nombre.strip()
+    return normalizar_banco(nombre)
 
 
 def calcular_nivel(codigo: str) -> int:

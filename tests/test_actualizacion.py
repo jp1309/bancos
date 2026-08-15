@@ -1,4 +1,5 @@
 import json
+import runpy
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,8 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import fuente_bancos
+import nombres_bancos
+import portal_bancos
 import validar_actualizacion as validador
 
 
@@ -61,6 +64,71 @@ class FuenteBancosTests(unittest.TestCase):
                 archivo.writestr("B.xlsx", b"dos")
             with self.assertRaisesRegex(ValueError, "unico XLSX"):
                 fuente_bancos.validar_zip(ruta)
+
+
+class PortalBancosTests(unittest.TestCase):
+    def setUp(self):
+        self.archivos = [
+            {
+                "nombre": f"Series Banco {i} JULIO 2026.zip",
+                "id": f"id-{i}",
+                "url": (
+                    "https://www.superbancos.gob.ec/estadisticas/portalestudios/"
+                    "wp-admin/admin-ajax.php?action=shareonedrive-download"
+                    f"&id=id-{i}&listtoken=token-vigente"
+                ),
+            }
+            for i in range(2)
+        ]
+
+    def test_usa_enlace_dinamico_del_dom(self):
+        preparados = portal_bancos.preparar_archivos_dom(self.archivos)
+        self.assertIn("listtoken=token-vigente", preparados[0]["url"])
+
+    def test_rechaza_host_ajeno(self):
+        self.archivos[0]["url"] = "https://example.com/archivo.zip?id=id-0"
+        with self.assertRaisesRegex(ValueError, "Host de descarga no permitido"):
+            portal_bancos.preparar_archivos_dom(self.archivos)
+
+    def test_detecta_fuente_rezagada_sin_descargar(self):
+        archivos = [
+            dict(a, nombre=a["nombre"].replace("JULIO", "JUNIO"))
+            for a in self.archivos
+        ]
+        self.assertEqual(
+            portal_bancos.clasificar_publicacion(archivos, "JULIO 2026", 2),
+            "rezagada",
+        )
+
+    def test_rechaza_publicacion_parcial(self):
+        self.archivos[0]["nombre"] = self.archivos[0]["nombre"].replace(
+            "JULIO", "JUNIO"
+        )
+        with self.assertRaisesRegex(ValueError, "Publicacion parcial"):
+            portal_bancos.clasificar_publicacion(
+                self.archivos, "JULIO 2026", 2
+            )
+
+
+class NombresBancosTests(unittest.TestCase):
+    def test_unifica_acentos_y_mayusculas_del_portal(self):
+        self.assertEqual(nombres_bancos.normalizar_banco("Pacifico"), "Pacífico")
+        self.assertEqual(
+            nombres_bancos.normalizar_banco("Comercial de manabí"),
+            "Comercial de Manabí",
+        )
+        self.assertEqual(
+            nombres_bancos.normalizar_banco("General Rumin\u0303ahui"),
+            "General Rumiñahui",
+        )
+
+    def test_todos_los_bancos_canonicos_tienen_color_en_la_ui(self):
+        configuracion_ui = runpy.run_path(ROOT / "config" / "indicator_mapping.py")
+        self.assertTrue(
+            set(nombres_bancos.NOMBRES_CANONICOS).issubset(
+                configuracion_ui["COLORES_BANCOS"]
+            )
+        )
 
 
 class ValidadorPublicacionTests(unittest.TestCase):

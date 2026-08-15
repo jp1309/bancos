@@ -16,6 +16,7 @@ import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).parent))
 import config
+from nombres_bancos import normalizar_banco
 
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -48,7 +49,7 @@ def fecha_objetivo_config() -> pd.Timestamp:
 
 
 def _serializar_bancos(valores) -> list[str]:
-    return sorted(str(valor) for valor in valores)
+    return sorted({normalizar_banco(str(valor)) for valor in valores})
 
 
 def capturar_estado() -> dict:
@@ -121,6 +122,8 @@ def validar_actualizacion(
         if fechas.isna().any():
             errores.append(f"{nombre}: contiene {int(fechas.isna().sum())} fechas invalidas")
             continue
+
+        df["banco"] = df["banco"].astype(str).map(normalizar_banco)
 
         fecha_min = fechas.min()
         fecha_max = fechas.max()

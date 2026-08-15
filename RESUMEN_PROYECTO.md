@@ -11,25 +11,25 @@ Radar Bancario Ecuador transforma boletines mensuales por entidad de la Superint
 | Aplicación | [Pública en Streamlit](https://jp1309-bancos.streamlit.app/) |
 | Rama de producción | `main` |
 | Entry point | `Inicio.py` |
-| Corte publicado | 30 de junio de 2026 |
+| Corte publicado | 31 de julio de 2026 |
 | Cobertura último mes | 23 bancos en Balance, PyG y CAMEL |
-| Historia | enero de 2003-junio de 2026 |
-| Automatización | GitHub Actions, días pares seleccionados del 6 al 20 |
+| Historia | enero de 2003-julio de 2026 |
+| Automatización | GitHub Actions, revisión diaria del 6 al 20 |
 | Licencia | MIT para el software |
 
 ## Productos de datos
 
 | Archivo | Filas | Tamaño aproximado | Uso |
 |---|---:|---:|---|
-| `master_data/balance.parquet` | 8.152.043 | 18,31 MB | Balance y Panorama |
-| `master_data/pyg.parquet` | 755.584 | 9,41 MB | Pérdidas y Ganancias |
-| `master_data/camel.parquet` | 230.102 | 1,52 MB | Indicadores CAMEL |
+| `master_data/balance.parquet` | 8.183.806 | 19,66 MB | Balance y Panorama |
+| `master_data/pyg.parquet` | 758.528 | 9,59 MB | Pérdidas y Ganancias |
+| `master_data/camel.parquet` | 230.999 | 1,56 MB | Indicadores CAMEL |
 
-Las cifras corresponden a la fotografía validada el 18 de julio de 2026 y deben leerse junto con `master_data/metadata.json`.
+Las cifras corresponden a la fotografía validada el 14 de agosto de 2026 y deben leerse junto con `master_data/metadata.json`.
 
 ## Componentes
 
-- **Descarga:** Selenium y Requests navegan los boletines por entidad.
+- **Descarga:** Selenium descubre los enlaces vigentes; Requests usa reintentos y Chrome actúa como transporte seguro alternativo ante cadenas TLS incompletas.
 - **Inspección de fuente:** valida 23 ZIP, un XLSX por entidad, hojas BAL/PYG/CAMEL y una fecha uniforme.
 - **ETL:** procesadores independientes generan los tres Parquet.
 - **Puerta de calidad:** valida esquema, fechas, continuidad, bancos, duplicados, metadata e historia.

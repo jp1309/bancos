@@ -19,6 +19,7 @@ En GitHub Actions se ejecuta automáticamente el día 10 de cada mes.
 import os
 import sys
 import json
+import stat
 import shutil
 import subprocess
 import tempfile
@@ -131,7 +132,6 @@ def ejecutar_script(script_name: str) -> int:
         result = subprocess.run(
             [sys.executable, str(script_path)],
             cwd=str(ROOT_DIR),
-            capture_output=True,
             text=True,
             timeout=600  # 10 minutos máximo
         )
@@ -141,10 +141,6 @@ def ejecutar_script(script_name: str) -> int:
             return 0
         else:
             log(f"[FAIL] {script_name} fallo con codigo {result.returncode}", "ERROR")
-            if result.stdout:
-                log(f"  Salida: {result.stdout[-1000:]}", "ERROR")
-            if result.stderr:
-                log(f"  Error: {result.stderr[-1000:]}", "ERROR")
             return result.returncode
 
     except subprocess.TimeoutExpired:
@@ -234,7 +230,11 @@ def limpiar_datos_temporales():
     carpeta_descarga = ROOT_DIR / config.get_carpeta_salida()
     if carpeta_descarga.exists():
         try:
-            shutil.rmtree(carpeta_descarga)
+            def quitar_solo_lectura(func, ruta, _exc_info):
+                os.chmod(ruta, stat.S_IWRITE)
+                func(ruta)
+
+            shutil.rmtree(carpeta_descarga, onerror=quitar_solo_lectura)
             log(f"  Eliminada carpeta: {carpeta_descarga.name}")
         except Exception as e:
             log(f"  No se pudo eliminar {carpeta_descarga.name}: {e}", "WARNING")

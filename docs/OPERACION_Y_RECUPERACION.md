@@ -40,15 +40,18 @@ El flujo descarga 23 entidades, procesa los tres productos, valida y crea un com
 | Síntoma | Causa probable | Acción segura |
 |---|---|---|
 | Portal no carga o Selenium agota espera | Caída o cambio del portal | Reintentar; si persiste, inspeccionar selectores de `descargar.py` |
+| `SSLCertVerificationError` en las descargas | El servidor omitió un certificado intermedio | El descargador cambia automáticamente a Chrome; nunca usar `verify=False` |
 | Código `2` | Fuente interna aún en el mes anterior | Esperar; no modificar estado ni forzar commit |
 | Menos/más de 23 ZIP o XLSX | Fuente parcial o cambio institucional | No publicar; contrastar portal y revisar configuración |
 | BAL/PYG/CAMEL con fechas distintas | Boletín inconsistente | No publicar; conservar corte anterior |
 | Un banco queda rezagado | Fuente o procesador incompleto | Revisar entidad y hoja; la puerta debe fallar |
+| Aparecen dos variantes del mismo banco | Cambio de acento, mayúscula o Unicode en el portal | Añadir el alias a `nombres_bancos.py`; no unir filas manualmente |
 | Duplicados de clave | Error de extracción/consolidación | Corregir procesador; no eliminar a ciegas después del ETL |
 | PyG o CAMEL pierde meses | Reemplazo histórico incorrecto | Restaurar y revisar lógica de solapamiento |
 | `git push` denegado en Actions | Falta `contents: write` o protección de rama | Revisar permisos y reglas de `main` |
 | GitHub está correcto pero Streamlit está viejo | Redespliegue pendiente o app mal configurada | Verificar repo/rama/entrypoint y hacer Reboot app |
 | Primera visita tarda | App dormida en Community Cloud | Despertar la app; no es pérdida de datos |
+| Un temporal de OneDrive no se puede borrar | Carpeta local bloqueada o punto de reanálisis | La siguiente ejecución usa otro staging; retirar luego solo el temporal específico |
 
 ## Recuperación automática local
 

@@ -309,7 +309,7 @@ BANCOS_SISTEMA = [
     'Capital',
     'Citibank',
     'Codesarrollo',
-    'Comercial Manabi',
+    'Comercial de Manabí',
     'Coopnacional',
     'DelBank',
     'Diners',
@@ -318,13 +318,13 @@ BANCOS_SISTEMA = [
     'Litoral',
     'Loja',
     'Machala',
-    'Pacifico',
+    'Pacífico',
     'Pichincha',
     'Procredit',
     'Produbanco',
-    'Ruminahui',
+    'General Rumiñahui',
     'Solidario',
-    'Visionfund',
+    'VisionFund',
 ]
 
 # =============================================================================
@@ -336,7 +336,7 @@ BANCOS_SISTEMA = [
 COLORES_BANCOS = {
     'Pichincha': '#1f77b4',      # Azul (banco más grande)
     'Guayaquil': '#ff7f0e',      # Naranja
-    'Pacifico': '#2ca02c',       # Verde
+    'Pacífico': '#2ca02c',       # Verde
     'Produbanco': '#d62728',     # Rojo
     'Bolivariano': '#9467bd',    # Púrpura
     'Internacional': '#8c564b',   # Marrón
@@ -344,7 +344,7 @@ COLORES_BANCOS = {
     'Machala': '#7f7f7f',        # Gris
     'Loja': '#bcbd22',           # Verde oliva
     'Solidario': '#17becf',      # Cian
-    'Ruminahui': '#aec7e8',      # Azul claro
+    'General Rumiñahui': '#aec7e8', # Azul claro
     'Diners': '#ffbb78',         # Naranja claro
     'Capital': '#98df8a',        # Verde claro
     'Procredit': '#ff9896',      # Rojo claro
@@ -352,9 +352,9 @@ COLORES_BANCOS = {
     'DelBank': '#c49c94',        # Marrón claro
     'Litoral': '#f7b6d2',        # Rosa claro
     'Citibank': '#c7c7c7',       # Gris claro
-    'Comercial Manabi': '#dbdb8d', # Verde oliva claro
+    'Comercial de Manabí': '#dbdb8d', # Verde oliva claro
     'Codesarrollo': '#9edae5',   # Cian claro
-    'Visionfund': '#e7ba52',     # Dorado
+    'VisionFund': '#e7ba52',     # Dorado
     'Atlantida': '#ad494a',      # Rojo oscuro
     'Amibank': '#8c6d31',        # Café oscuro
     'Amazonas': '#de9ed6',       # Rosa medio

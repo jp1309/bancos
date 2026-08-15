@@ -8,11 +8,11 @@ La automatización está definida en `.github/workflows/actualizar-datos.yml` y 
 
 ## Calendario
 
-GitHub Actions intenta la actualización los días 6, 8, 10, 12, 14, 16, 18 y 20 de cada mes a las 13:00 UTC (08:00 de Ecuador continental, UTC-5).
+GitHub Actions intenta la actualización diariamente del 6 al 20 de cada mes a las 13:00 UTC (08:00 de Ecuador continental, UTC-5).
 
 El período objetivo se calcula en tiempo de ejecución como el mes calendario anterior. En enero, el cálculo cambia automáticamente al diciembre del año anterior.
 
-Los reintentos existen porque la publicación oficial no ocurre siempre el mismo día. Un intento sin avance es un no-op normal, no un incidente.
+Los reintentos existen porque la publicación oficial no ocurre siempre el mismo día. Un intento sin avance es un no-op normal, no un incidente. El workflow impide ejecuciones concurrentes y limita cada job a 30 minutos.
 
 ## Flujo del workflow
 
@@ -66,7 +66,9 @@ No se debe publicar un subconjunto de estos archivos para un corte nuevo.
 - fecha interna uniforme entre hojas y bancos;
 - fecha de corte igual al mes objetivo y posterior al Parquet publicado.
 
-La descarga se realiza en archivos y directorios temporales. La fuente vigente solo se reemplaza después de validar el staging completo.
+Los enlaces completos se leen del DOM; no se conservan tokens de OneDrive en el código. Requests reintenta errores transitorios y, si la cadena TLS del portal no puede validarse, Chrome —que ya navegó el sitio oficial— realiza la descarga sin desactivar la verificación HTTPS.
+
+Si los 23 nombres todavía anuncian el mes anterior, el proceso devuelve `2` antes de bajar los ZIP. Si anuncian el objetivo, la fecha interna sigue siendo obligatoria. Una publicación parcial se considera error. Una fuente local ya validada puede reutilizarse al reintentar un ETL, y cada ejecución usa un staging único para que un temporal bloqueado no impida la siguiente.
 
 ## Orquestador transaccional
 
@@ -104,6 +106,8 @@ El workflow usa `set +e` únicamente alrededor del orquestador para capturar el 
 - cero duplicados en la clave de cada dataset;
 - fecha coherente en `metadata.json` y `bancos_error` vacío;
 - sin pérdida de meses, bancos o inicio histórico respecto del estado previo.
+
+Los nombres se normalizan mediante una identidad canónica que tolera variantes de mayúsculas, acentos y composición Unicode. Esto evita dividir una serie cuando el portal corrige la escritura de una entidad.
 
 Solo si esta validación pasa se prepara el commit automático.
 

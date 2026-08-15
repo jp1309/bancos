@@ -30,7 +30,7 @@ st.set_page_config(
 )
 
 # Bancos preseleccionados por defecto
-BANCOS_DEFAULT = ['Pichincha', 'Pacifico', 'Guayaquil', 'Produbanco']
+BANCOS_DEFAULT = ['Pichincha', 'Pacífico', 'Guayaquil', 'Produbanco']
 
 # Nombres de meses en español
 MESES = {
