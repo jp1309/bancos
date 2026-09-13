@@ -33,6 +33,13 @@ NOMBRES_CANONICOS = (
     "VisionFund",
 )
 
+# Variantes observadas en el portal que representan la misma entidad histórica.
+# Los alias son explícitos a propósito: una coincidencia difusa podría unir por
+# error dos bancos distintos ante una fusión o un cambio legal real.
+ALIAS_BANCOS = {
+    "VisionFund Ecuador": "VisionFund",
+}
+
 
 def clave_banco(nombre: str) -> str:
     """Crea una clave que tolera mayusculas, espacios y variantes Unicode."""
@@ -42,6 +49,10 @@ def clave_banco(nombre: str) -> str:
 
 
 _POR_CLAVE = {clave_banco(nombre): nombre for nombre in NOMBRES_CANONICOS}
+_POR_CLAVE.update({
+    clave_banco(alias): canonico
+    for alias, canonico in ALIAS_BANCOS.items()
+})
 
 
 def normalizar_banco(nombre: str) -> str:

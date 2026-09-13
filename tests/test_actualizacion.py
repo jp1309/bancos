@@ -122,6 +122,17 @@ class NombresBancosTests(unittest.TestCase):
             "General Rumiñahui",
         )
 
+    def test_unifica_alias_oficial_de_visionfund(self):
+        self.assertEqual(
+            nombres_bancos.normalizar_banco("VisionFund Ecuador"),
+            "VisionFund",
+        )
+        self.assertTrue(
+            set(nombres_bancos.ALIAS_BANCOS.values()).issubset(
+                nombres_bancos.NOMBRES_CANONICOS
+            )
+        )
+
     def test_todos_los_bancos_canonicos_tienen_color_en_la_ui(self):
         configuracion_ui = runpy.run_path(ROOT / "config" / "indicator_mapping.py")
         self.assertTrue(
@@ -140,8 +151,8 @@ class ValidadorPublicacionTests(unittest.TestCase):
         validador.MASTER_DATA_DIR = self.master
         self.addCleanup(setattr, validador, "MASTER_DATA_DIR", self.master_original)
 
-    def escribir_datasets(self, pyg_rezagado=False):
-        bancos = ["A", "B"]
+    def escribir_datasets(self, pyg_rezagado=False, bancos=None):
+        bancos = bancos or ["A", "B"]
         fechas = pd.to_datetime(["2026-05-31", "2026-06-30"])
 
         balance = pd.DataFrame([
@@ -191,6 +202,21 @@ class ValidadorPublicacionTests(unittest.TestCase):
             validador.validar_actualizacion(
                 pd.Timestamp("2026-06-30"), anterior, bancos_esperados=2
             )
+
+    def test_alias_nuevo_conserva_identidad_historica(self):
+        self.escribir_datasets(bancos=["A", "VisionFund Ecuador"])
+        anterior = validador.capturar_estado()
+        for dataset in anterior.values():
+            dataset["bancos"] = ["A", "VisionFund"]
+            dataset["bancos_ultimo_mes"] = ["A", "VisionFund"]
+
+        estado = validador.validar_actualizacion(
+            pd.Timestamp("2026-06-30"), anterior, bancos_esperados=2
+        )
+        self.assertEqual(
+            estado["balance"]["bancos_ultimo_mes"],
+            ["A", "VisionFund"],
+        )
 
 
 if __name__ == "__main__":

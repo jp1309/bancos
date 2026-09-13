@@ -107,7 +107,16 @@ El workflow usa `set +e` únicamente alrededor del orquestador para capturar el 
 - fecha coherente en `metadata.json` y `bancos_error` vacío;
 - sin pérdida de meses, bancos o inicio histórico respecto del estado previo.
 
-Los nombres se normalizan mediante una identidad canónica que tolera variantes de mayúsculas, acentos y composición Unicode. Esto evita dividir una serie cuando el portal corrige la escritura de una entidad.
+Los nombres se normalizan mediante una identidad canónica que tolera variantes
+de mayúsculas, acentos y composición Unicode. Los cambios de denominación
+confirmados por la fuente se registran explícitamente en `ALIAS_BANCOS`, dentro
+de `scripts/nombres_bancos.py`; por ejemplo, `VisionFund Ecuador` conserva la
+serie histórica `VisionFund`. No se usa coincidencia difusa porque podría unir
+entidades distintas ante una fusión o un cambio legal real.
+
+Si una entidad desaparece y aparece un nombre desconocido, el validador muestra
+ambos conjuntos en el mismo error y restaura los Parquet anteriores. Esto hace
+diagnosticable un nuevo alias sin permitir una publicación parcial.
 
 Solo si esta validación pasa se prepara el commit automático.
 

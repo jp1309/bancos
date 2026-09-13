@@ -182,7 +182,15 @@ def validar_actualizacion(
                 )
             bancos_perdidos = set(anterior.get("bancos", [])) - bancos_totales
             if bancos_perdidos:
-                errores.append(f"{nombre}: perdio bancos {sorted(bancos_perdidos)}")
+                bancos_nuevos = bancos_totales - set(anterior.get("bancos", []))
+                detalle_nuevos = (
+                    f"; aparecieron nombres nuevos {sorted(bancos_nuevos)}"
+                    if bancos_nuevos else ""
+                )
+                errores.append(
+                    f"{nombre}: perdio bancos {sorted(bancos_perdidos)}"
+                    f"{detalle_nuevos}"
+                )
 
     metadata_path = MASTER_DATA_DIR / "metadata.json"
     if not metadata_path.exists():
